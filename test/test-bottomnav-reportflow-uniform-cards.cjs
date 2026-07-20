@@ -30,15 +30,17 @@ function assert(cond, msg) {
   await page.waitForSelector('.room-card', { timeout: 10000 });
 
   // ---- ① Report Flowが物件情報タブの一番下にある ----
+  // [2026-07-19再修正] 「REPORT FLOWのアイコンアプリ」に続くご指示で、Report Flowの
+  // 直前にあった「設定情報」欄自体が撤去された(読み込みは上部ナビ、リセットは歯車メニューへ
+  // 一本化)。そのためReport Flowは「設定情報」ではなく「設備点検」の直後・タブの一番下に
+  // なる。
   await page.locator('#navList').click();
   await page.waitForTimeout(300);
   const sectionTitles = await page.locator('#listView .section-title').allTextContents();
-  const settingsIdx = sectionTitles.indexOf('設定情報');
   const reportFlowIdx = sectionTitles.indexOf('Report Flow');
-  assert(settingsIdx !== -1, '「設定情報」の見出しが存在する');
+  assert(sectionTitles.indexOf('設定情報') === -1, '「設定情報」の見出しはもう存在しない(欄自体が撤去された)');
   assert(reportFlowIdx !== -1, '「Report Flow」の見出しが存在する');
-  assert(reportFlowIdx > settingsIdx, 'Report Flowは設定情報より下にある (got order: ' + JSON.stringify(sectionTitles) + ')');
-  assert(reportFlowIdx === sectionTitles.length - 1, 'Report Flowが物件情報タブの一番下のセクションになっている');
+  assert(reportFlowIdx === sectionTitles.length - 1, 'Report Flowが物件情報タブの一番下のセクションになっている (got order: ' + JSON.stringify(sectionTitles) + ')');
 
   // Report Flowのボタン自体は移動後も引き続き機能すること
   const exportBtnVisible = await page.locator('#exportReportFlowBtn').isVisible();

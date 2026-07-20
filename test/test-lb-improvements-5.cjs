@@ -53,7 +53,12 @@ function assert(cond, msg) {
   await page.waitForTimeout(150);
   // addVisitTime()は「既にdoneでない場合はabsentにする」実装のため、seedデータのdone状態を
   // 先にmarkUndoでpendingへ戻しておく(この時点ではまだ訪問時刻を記録していないので単純undo)。
+  // 2026-07-19変更: 「サイン画面で未点検ボタンをタップしても画面が切り替わるように」との
+  // ご指示により、#markUndoは常に一覧画面(グリッド)へ戻るようになったため、続けて同じ部屋を
+  // 操作するにはパネルを開き直す必要がある。
   await page.locator('#markUndo').click();
+  await page.waitForTimeout(150);
+  await page.locator('.room-card[data-room="' + ABSENT_ROOM + '"]').click();
   await page.waitForTimeout(150);
   // 「不在だった場合の訪問時刻を記録する」は折りたたみ(<details>)の中にあるため、先に開く。
   await page.locator('#visitTimesDetails summary').click();
@@ -71,12 +76,17 @@ function assert(cond, msg) {
   await doneCard.waitFor({ state: 'attached' });
   const doneStyle = await doneCard.evaluate((el) => {
     const cs = getComputedStyle(el);
-    return { bg: cs.backgroundColor };
+    return { bg: cs.backgroundColor, bgImage: cs.backgroundImage };
   });
   // 2026-07-17 配色統一: --greenが--brand-orange(ブランドカラー変数。歴史的経緯でこの名前だが、
   // 現在の値は「オレンジを使ってる色を全色、添付のブルーに変更」の指示によりブルー#007AFE)に
   // エイリアスされたため、点検済みの塗りつぶし色は緑でもオレンジでもなくブルーになった。
-  assert(doneStyle.bg === 'rgb(0, 122, 254)', '点検済みの部屋カードは背景がブルー(#007AFE)で塗りつぶされている (got: ' + doneStyle.bg + ')');
+  // [2026-07-19追記]「部屋カードを立方体にしたい」のご指示により、点検済みカードは単色の
+  // background-colorから、上が明るく下が濃いグラデーション(background-image)に変更された
+  // (立方体風の立体感を出すため)。そのためbackgroundColorは透明(rgba(0,0,0,0))になり、
+  // 代わりにbackgroundImageのグラデーションにブルー(rgb(0, 122, 254))が含まれることを検証する。
+  assert(doneStyle.bgImage.indexOf('gradient') !== -1, '点検済みの部屋カードは立方体風のグラデーション背景になっている (got: ' + doneStyle.bgImage + ')');
+  assert(doneStyle.bgImage.indexOf('rgb(0, 122, 254)') !== -1, '点検済みの部屋カードのグラデーションにブルー(#007AFE)が含まれている (got: ' + doneStyle.bgImage + ')');
 
   const pendingBg = await page.locator('.room-card[data-room="' + TARGET_ROOM + '"]').evaluate((el) => getComputedStyle(el).backgroundColor);
   assert(pendingBg !== 'rgb(0, 122, 254)', '未点検の部屋カードはブルー塗りつぶしにならない(点検済みと区別できる) (got: ' + pendingBg + ')');
@@ -183,38 +193,51 @@ function assert(cond, msg) {
   assert(scheduleTitleVisible, '「点検日程」の見出し自体は引き続き表示されている');
 
   // ---- ⑤ 設定情報：説明文を削除し、色分けしたトグル状ボタンに ----
+  // [2026-07-19再修正] 「REPORT FLOWのアイコンアプリ」に続くご指示で、物件情報タブの
+  // 「設定情報」欄自体が撤去された(読み込みは上部ナビの#uploadDataToggleに、リセットは
+  // 上部ナビの歯車メニュー#settingsMenuPopupへ一本化)。そのため以下のアサーションは、
+  // 新しい置き場所での検証に更新している。
   assert(listViewText.indexOf('データの読み込み・リセットはこちらにまとめています') === -1,
-    '「設定情報」の説明文はもう表示されない');
-  assert(listViewText.indexOf('元に戻せない') !== -1,
-    '「全データをリセット」の危険性を伝える警告は引き続き表示されている(安全性は維持)');
+    '「設定情報」の説明文はもう表示されない(欄自体が撤去された)');
+  assert((await page.locator('#listView .section-title', { hasText: '設定情報' }).count()) === 0,
+    '物件情報タブの「設定情報」欄自体が撤去されている');
+  assert((await page.locator('#uploadToggle').count()) === 0,
+    '物件情報タブ側の#uploadToggleはもう存在しない(上部ナビの#uploadDataToggleに一本化)');
 
-  const uploadBtnStyle = await page.locator('#uploadToggle').evaluate((el) => getComputedStyle(el).backgroundColor);
+  await page.locator('#settingsToggle').click();
+  await page.waitForTimeout(150);
+  const resetWarningVisible = await page.locator('#settingsMenuPopup').textContent();
+  assert(resetWarningVisible.indexOf('全データをリセット') !== -1,
+    '「全データをリセット」は歯車メニュー内に引き続き存在する');
+
   const resetBtnStyle = await page.locator('#resetDataBtn').evaluate((el) => getComputedStyle(el).backgroundColor);
+  const resetBtnBorderColor = await page.locator('#resetDataBtn').evaluate((el) => getComputedStyle(el).borderColor);
+  const resetBtnTextColor = await page.locator('#resetDataBtn').evaluate((el) => getComputedStyle(el).color);
   // 2026-07-17 配色統一の最終形: 「オレンジを使ってる色を全色、添付のブルーに変更」の指示により、
   // 2026-07-17さらに再修正: 「青色はRGB R:0 G:122 B:254指定」のご指示により、ブランドカラーは
   // 厳密に指定されたこの値(#007AFE、白背景の上に載る文字・枠には濃いめの#00458F)になった。
-  assert(uploadBtnStyle === 'rgb(0, 122, 254)', '「データを読み込む」ボタンはブルーで塗りつぶされたトグル状ボタンになっている (got: ' + uploadBtnStyle + ')');
-  assert(resetBtnStyle === 'rgb(255, 255, 255)', '「全データをリセット」ボタンは白ベースになっている (got: ' + resetBtnStyle + ')');
-  const resetBtnBorderColor = await page.locator('#resetDataBtn').evaluate((el) => getComputedStyle(el).borderColor);
-  const resetBtnTextColor = await page.locator('#resetDataBtn').evaluate((el) => getComputedStyle(el).color);
+  // [2026-07-19再修正] 歯車メニューへの移動に伴い、背景はメニューの標準的な淡いグレー
+  // (#F0F1F4)になったが、枠・文字は引き続き危険を示すブルー系のまま。
+  assert(resetBtnStyle === 'rgb(240, 241, 244)', '「全データをリセット」ボタンは歯車メニューの標準的な背景色になっている (got: ' + resetBtnStyle + ')');
   assert(resetBtnBorderColor === 'rgb(0, 122, 254)', '「全データをリセット」ボタンの枠はブルーになっている (got: ' + resetBtnBorderColor + ')');
   assert(resetBtnTextColor === 'rgb(0, 69, 143)', '「全データをリセット」ボタンの文字はブルー(視認性の高い濃いめのブルー)になっている (got: ' + resetBtnTextColor + ')');
-  const resetWarningColor = await page.locator('.settings-toggle-warning').evaluate((el) => getComputedStyle(el).color);
-  assert(resetWarningColor === 'rgb(0, 69, 143)', '「元に戻せない操作です」の警告文もブルーになっている (got: ' + resetWarningColor + ')');
-  assert(uploadBtnStyle !== resetBtnStyle, '2つのボタンは色分けされていて見分けがつく(塗りつぶし有無で区別)');
 
-  // 移動・改修後もボタンの動作自体は壊れていないこと
-  await page.locator('#uploadToggle').click();
-  await page.waitForTimeout(150);
-  assert(await page.locator('#uploadChoiceDialog').isVisible(), '「物件データを読み込む」タップで#uploadChoiceDialogが開く(動作は変わらない)');
-  await page.locator('#uploadChoiceCancel').click();
-  await page.waitForTimeout(150);
-
-  let dialogMessage = null;
-  page.once('dialog', async (dialog) => { dialogMessage = dialog.message(); await dialog.dismiss(); });
+  // 移動・改修後もボタンの動作自体は壊れていないこと(歯車メニューは閉じ、確認ダイアログが開く)
+  // 2026-07-19変更: window.confirm()から、「リセット」入力必須のアプリ内蔵ダイアログに変更された
+  // ため、このテストもそちらを検証する形に更新(キャンセルしてデータは消さない)。
   await page.locator('#resetDataBtn').click();
   await page.waitForTimeout(150);
-  assert(dialogMessage && dialogMessage.indexOf('元に戻せません') !== -1, '「全データをリセット」タップで従来通り確認ダイアログが出る(動作は変わらない)');
+  assert(!(await page.locator('#settingsMenuPopup').isVisible()), '「全データをリセット」タップで歯車メニュー自体は閉じる');
+  assert(await page.locator('#resetDataConfirmDialog').isVisible(), '「全データをリセット」タップでアプリ内蔵の確認ダイアログが出る(動作は変わらない)');
+  await page.locator('#resetDataConfirmCancel').click();
+  await page.waitForTimeout(150);
+
+  // 「物件データを読み込む」は引き続き上部ナビの#uploadDataToggleから機能する
+  await page.locator('#uploadDataToggle').click();
+  await page.waitForTimeout(150);
+  assert(await page.locator('#uploadChoiceDialog').isVisible(), '上部ナビの#uploadDataToggleタップで#uploadChoiceDialogが開く(動作は変わらない)');
+  await page.locator('#uploadChoiceCancel').click();
+  await page.waitForTimeout(150);
 
   // ---- ③ サイン全画面モード ----
   await page.locator('#navHome').click();

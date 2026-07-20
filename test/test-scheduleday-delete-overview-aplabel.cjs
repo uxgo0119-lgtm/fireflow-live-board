@@ -67,11 +67,13 @@ function assert(cond, msg) {
   assert(!nativeConfirmCalled, 'window.confirm()(ブラウザ標準ダイアログ)はもう使われていない');
 
   // ---- ② 俯瞰モード: チェック/✖アイコンが消え、代わりにA/P等のラベルが部屋番号の下に出る ----
+  // [2026-07-19] 表示モード切替は、タップの度に順送りで切り替える方式から、文字サイズ変更と
+  // 同じくポップアップから直接選ぶ方式(#gridModePopup > .grid-mode-option[data-mode])に変更された。
   await page.locator('#navHome').click();
   await page.waitForTimeout(350);
-  await page.locator('#gridExpandToggle').click(); // normal -> enlarged
+  await page.locator('#gridExpandToggle').click();
   await page.waitForTimeout(150);
-  await page.locator('#gridExpandToggle').click(); // enlarged -> overview
+  await page.locator('.grid-mode-option[data-mode="overview"]').click();
   await page.waitForTimeout(200);
   const isOverview = await page.evaluate(() => document.body.classList.contains('overview'));
   assert(isOverview, '俯瞰モードに切り替わっている');

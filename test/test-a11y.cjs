@@ -111,25 +111,34 @@ function parseRgb(str) {
     const scaleBefore = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--font-scale').trim());
     assert(scaleBefore === '1', '初期状態では--font-scaleが1 (got: ' + scaleBefore + ')');
 
-    const brandFontBefore = await page.evaluate(() => parseFloat(getComputedStyle(document.querySelector('.brand-name')).fontSize));
-    assert(Math.abs(brandFontBefore - 24) < 0.5, '標準時、.brand-nameのfont-sizeは24px (got: ' + brandFontBefore + ')');
+    // 2026-07-19四訂: .brand-nameはテキストのdivから画像ロゴの<img>に変更されたため、
+    // font-sizeではなくheight(var(--font-scale)連動)で拡大率を検証する。
+    // [2026-07-19再修正]「文字を大、特大にしたら上部のナビゲーションの位置が変わる」との
+    // ご指摘への対応で、ロゴの高さは文字サイズに連動しない固定値に変更した。以下の
+    // アサーションも、ロゴの高さが「変わらない」ことを確認する内容に更新している。
+    // [2026-07-19再々修正]「ロゴの右横にLive Boardのフォントを小さく表示」のご指示により、
+    // ワードマークの高さ自体も27px→18pxに縮小された。
+    const brandHeightBefore = await page.evaluate(() => parseFloat(getComputedStyle(document.querySelector('.brand-name')).height));
+    assert(Math.abs(brandHeightBefore - 18) < 0.5, '標準時、.brand-nameロゴ画像のheightは18px (got: ' + brandHeightBefore + ')');
 
-    await page.locator('#fontSizeToggle').click();
+    // 2026-07-19変更: 「文字サイズ」単独のアイコン(#fontSizeToggle)は画面ロックとまとめて
+    // 歯車アイコン(#settingsToggle)に統合され、ポップアップも#settingsMenuPopupになった。
+    await page.locator('#settingsToggle').click();
     await page.waitForTimeout(100);
-    const popupVisible = await page.locator('#fontSizePopup').isVisible();
-    assert(popupVisible, '#fontSizeToggleをタップすると#fontSizePopupが表示される');
+    const popupVisible = await page.locator('#settingsMenuPopup').isVisible();
+    assert(popupVisible, '#settingsToggleをタップすると#settingsMenuPopupが表示される');
 
     await page.locator('.font-size-option[data-scale="1.3"]').click();
     await page.waitForTimeout(100);
-    const popupHidden = !(await page.locator('#fontSizePopup').isVisible());
+    const popupHidden = !(await page.locator('#settingsMenuPopup').isVisible());
     assert(popupHidden, '「特大」を選ぶとポップアップが閉じる');
 
     const scaleAfter = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--font-scale').trim());
     assert(scaleAfter === '1.3', '「特大」選択後、--font-scaleが1.3になる (got: ' + scaleAfter + ')');
 
-    const brandFontAfter = await page.evaluate(() => parseFloat(getComputedStyle(document.querySelector('.brand-name')).fontSize));
-    assert(Math.abs(brandFontAfter - 24 * 1.3) < 0.5,
-      '「特大」選択後、.brand-nameのfont-sizeが24px*1.3=31.2pxに拡大される (got: ' + brandFontAfter + ')');
+    const brandHeightAfter = await page.evaluate(() => parseFloat(getComputedStyle(document.querySelector('.brand-name')).height));
+    assert(Math.abs(brandHeightAfter - 18) < 0.5,
+      '「特大」選択後も、.brand-nameロゴ画像のheightは18pxのまま変わらない(上部ナビの位置が動かないための固定化) (got: ' + brandHeightAfter + ')');
 
     // localStorageに保存され、リロード後も復元されること
     const saved = await page.evaluate(() => window.localStorage.getItem('lb_font_scale'));
@@ -143,7 +152,7 @@ function parseRgb(str) {
     assert(activeOption === '1.3', 'リロード後、ポップアップ内でも「特大」が選択済み表示になる (got: ' + activeOption + ')');
 
     // 標準に戻す
-    await page.locator('#fontSizeToggle').click();
+    await page.locator('#settingsToggle').click();
     await page.waitForTimeout(100);
     await page.locator('.font-size-option[data-scale="1"]').click();
     await page.waitForTimeout(100);

@@ -3,7 +3,17 @@
 // ②「Live Boardのフォントを添付のフォントに、文字の間隔も添付参照」→ .brand-nameのfont-familyに
 //   'Poppins'(太字・幾何学的なサンセリフ)を指定し、字間を詰めた(letter-spacing: -1px)。
 //   (オフラインでフォント読み込みに失敗した場合は自動的にシステムフォントへフォールバックする)
-// ③「文字の色は青」→ .brand-nameの文字色をブランドブルー(var(--blue) = #007AFE)に変更した。
+//   [2026-07-19追記] 「まだSUNTORY風フォントになっていない」との指摘を受け、Poppinsから
+//   'Fredoka'(RFのロゴでも採用した丸みのある太字フォント)に変更。字間もletter-spacing: -0.5pxへ調整。
+//   [2026-07-19再修正] 「Fredokaもまだ違う」との指摘を受け、ユーザーが選定した
+//   'M PLUS Rounded 1c'(日本発の丸ゴシック体、最太ウェイト900)へ変更。letter-spacingは0に調整。
+//   [2026-07-19四訂] Webフォントでの再現では何度指摘されても納得いただける見た目にならな
+//   かったため方針転換。ユーザーに5種類のロゴ案(画像)を提示 → 気に入った方向性(丸みのある
+//   太字ワードマーク)を選定 → 丸み量を3段階に調整した候補を再提示 → その中の
+//   「logo_reduced_less_c(細めストローク・弱めの丸み)」を正式採用。この画像をそのまま
+//   base64インラインPNGとして埋め込み、.brand-nameはテキストのdivから<img>タグに変更した
+//   (フォント読み込みの成否に関係なく常に同じ見た目になる)。
+// ③「文字の色は青」→ ロゴ画像の色をブランドブルー(#007AFE)で生成した。
 const { chromium } = require('playwright');
 const path = require('path');
 
@@ -11,14 +21,6 @@ function assert(cond, msg) {
   if (!cond) throw new Error('FAIL: ' + msg);
   console.log('OK: ' + msg);
 }
-
-function rgbToHex(rgb) {
-  var m = rgb.match(/\d+/g);
-  if (!m) return rgb;
-  return '#' + m.slice(0, 3).map(function (n) { return Number(n).toString(16).padStart(2, '0'); }).join('').toUpperCase();
-}
-
-const BLUE = '#007AFE';
 
 (async () => {
   const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
@@ -35,23 +37,31 @@ const BLUE = '#007AFE';
   const badgeCount = await page.locator('.brand-badge').count();
   assert(badgeCount === 0, 'トップ画像の「LB」アイコン(.brand-badge)が削除されている (got count: ' + badgeCount + ')');
 
-  // 「Live Board」のロゴ文字自体は引き続き表示されている(巻き添え削除されていない)
-  const nameVisible = await page.locator('.brand-name').isVisible();
-  const nameText = await page.locator('.brand-name').textContent();
-  assert(nameVisible, '「Live Board」のロゴ文字は引き続き表示されている');
-  assert(nameText.trim() === 'Live Board', '「Live Board」の表記自体は変更されていない (got: "' + nameText.trim() + '")');
-
-  // ---- ②③ フォント・字間・文字色 ----
-  const style = await page.evaluate(() => {
-    var cs = getComputedStyle(document.querySelector('.brand-name'));
-    return { fontFamily: cs.fontFamily, letterSpacing: cs.letterSpacing, color: cs.color, fontWeight: cs.fontWeight };
+  // ---- ロゴが<img>として表示されている(2026-07-19四訂: テキストから画像方式に変更) ----
+  const logoInfo = await page.evaluate(() => {
+    var el = document.querySelector('.brand-name');
+    if (!el) return null;
+    var r = el.getBoundingClientRect();
+    return {
+      tag: el.tagName,
+      alt: el.getAttribute('alt'),
+      srcIsDataPng: (el.getAttribute('src') || '').indexOf('data:image/png;base64,') === 0,
+      width: r.width,
+      height: r.height,
+      naturalWidth: el.naturalWidth,
+      naturalHeight: el.naturalHeight,
+    };
   });
-  assert(style.fontFamily.toLowerCase().indexOf('poppins') !== -1,
-    '「Live Board」に添付フォント相当(Poppins、太めのジオメトリックサンセリフ)が指定されている (got: ' + style.fontFamily + ')');
-  assert(parseFloat(style.letterSpacing) < 0,
-    '「Live Board」の字間が添付画像に合わせて詰められている (got letter-spacing: ' + style.letterSpacing + ')');
-  assert(rgbToHex(style.color) === BLUE, '「Live Board」の文字色が青になっている (got: ' + style.color + ')');
-  assert(parseInt(style.fontWeight, 10) >= 700, '「Live Board」の文字は太字のまま (got font-weight: ' + style.fontWeight + ')');
+  assert(!!logoInfo, '.brand-name 要素が存在する');
+  assert(logoInfo.tag === 'IMG', '.brand-name は<img>タグになっている(テキストのdivではない) (got: ' + logoInfo.tag + ')');
+  assert(logoInfo.alt === 'Live Board', 'ロゴ画像のalt属性が「Live Board」になっている(スクリーンリーダー対応、表記自体は維持) (got: "' + logoInfo.alt + '")');
+  assert(logoInfo.srcIsDataPng, 'ロゴ画像はbase64インラインPNG(data:image/png;base64,...)として埋め込まれている(外部フォント読み込みに依存しない)');
+  assert(logoInfo.naturalWidth > 0 && logoInfo.naturalHeight > 0, 'ロゴ画像が正常にデコードされ、実寸が取得できている (got: ' + logoInfo.naturalWidth + 'x' + logoInfo.naturalHeight + ')');
+  assert(logoInfo.height > 0 && logoInfo.height < 60, 'ロゴ画像の表示高さがトップバーに収まる妥当な範囲になっている (got height: ' + logoInfo.height + 'px)');
+
+  // 表示上の縦横比が、元のワードマーク画像(横長、幅:高さ ≒ 6:1)に近いこと
+  const aspect = logoInfo.naturalWidth / logoInfo.naturalHeight;
+  assert(aspect > 4.5 && aspect < 7.5, 'ロゴ画像の縦横比が横長のワードマークとして妥当な範囲 (got aspect: ' + aspect.toFixed(2) + ')');
 
   const EXPECTED_HARMLESS = ['supabase-integration.js', 'ERR_FILE_NOT_FOUND', 'ERR_TUNNEL_CONNECTION_FAILED', 'ERR_INTERNET_DISCONNECTED', 'ERR_NAME_NOT_RESOLVED', 'Not implemented', 'exitFullscreen', 'requestFullscreen', 'fonts.googleapis.com', 'fonts.gstatic.com'];
   const relevantErrors = errors.filter((e) => !EXPECTED_HARMLESS.some((h) => e.indexOf(h) !== -1));

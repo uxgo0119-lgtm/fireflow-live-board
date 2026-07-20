@@ -37,7 +37,7 @@ function assert(cond, msg) {
   assert(uniqueCardHeights[0] >= 140, '部屋カードの高さが詰めすぎて内容が入らなくなるほど小さくはなっていない (got: ' + uniqueCardHeights[0] + 'px)');
 
   // 特大文字時でも、はしごバッジ等と部屋詳細テキストが重ならないことを確認する
-  await page.locator('#fontSizeToggle').click();
+  await page.locator('#settingsToggle').click();
   await page.waitForTimeout(150);
   await page.locator('.font-size-option[data-scale="1.3"]').click();
   await page.waitForTimeout(200);
@@ -77,7 +77,7 @@ function assert(cond, msg) {
   assert(overlapCheck.hasHa, '検証対象の817号室に、はしごバッジ(は)を持つ避難器具の記録がある');
   assert(overlapCheck.gap >= 0, '特大文字(font-scale 1.3)でも、部屋詳細テキストとはしごバッジが重ならない (got gap: ' + overlapCheck.gap + 'px)');
   // 標準文字に戻す
-  await page.locator('#fontSizeToggle').click();
+  await page.locator('#settingsToggle').click();
   await page.waitForTimeout(150);
   await page.locator('.font-size-option[data-scale="1"]').click();
   await page.waitForTimeout(200);

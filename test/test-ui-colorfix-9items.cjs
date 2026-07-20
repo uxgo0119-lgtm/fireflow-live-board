@@ -46,24 +46,24 @@ const TINY_PNG_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR
   await page.goto(fileUrl);
   await page.waitForSelector('.room-card', { timeout: 10000 });
 
-  // ---- ① 点検後データを書き出す: 「全データをリセット」ボタンと同じ見た目 ----
+  // ---- ① 点検後データを書き出す: 白地・青枠・濃いめの青文字のピル型ボタン ----
+  // [2026-07-19再修正] 「REPORT FLOWのアイコンアプリ」に続くご指示で、「全データをリセット」
+  // (#resetDataBtn)は物件情報タブから上部ナビの歯車メニューへ移動し、メニュー項目としての
+  // 見た目(.font-size-option系、淡いグレー背景・角丸10px)に変わったため、以前のように
+  // 「点検後データを書き出す」ボタンと完全に同じ見た目であることは、もはや検証しない
+  // (両者は別の場所・別の役割になったため)。「点検後データを書き出す」自体は
+  // .settings-toggle-btn-redのまま変更していないので、そちらの見た目のみ検証する。
   await page.locator('#navList').click();
   await page.waitForTimeout(300);
-  const [exportBtnStyle, resetBtnStyle] = await Promise.all([
-    page.evaluate(() => {
-      var cs = getComputedStyle(document.getElementById('exportReportFlowBtn'));
-      return { bg: cs.backgroundColor, borderColor: cs.borderColor, color: cs.color, height: cs.height, borderRadius: cs.borderRadius, fontWeight: cs.fontWeight };
-    }),
-    page.evaluate(() => {
-      var cs = getComputedStyle(document.getElementById('resetDataBtn'));
-      return { bg: cs.backgroundColor, borderColor: cs.borderColor, color: cs.color, height: cs.height, borderRadius: cs.borderRadius, fontWeight: cs.fontWeight };
-    }),
-  ]);
+  const exportBtnStyle = await page.evaluate(() => {
+    var cs = getComputedStyle(document.getElementById('exportReportFlowBtn'));
+    return { bg: cs.backgroundColor, borderColor: cs.borderColor, color: cs.color, height: cs.height, borderRadius: cs.borderRadius, fontWeight: cs.fontWeight };
+  });
   assert(rgbToHex(exportBtnStyle.bg) === '#FFFFFF', '「点検後データを書き出す」ボタンの背景が白 (got: ' + exportBtnStyle.bg + ')');
   assert(rgbToHex(exportBtnStyle.borderColor) === BLUE, '「点検後データを書き出す」ボタンの枠が青 (got: ' + exportBtnStyle.borderColor + ')');
   assert(rgbToHex(exportBtnStyle.color) === DARK_BLUE, '「点検後データを書き出す」ボタンの文字が濃いめの青 (got: ' + exportBtnStyle.color + ')');
-  assert(JSON.stringify(exportBtnStyle) === JSON.stringify(resetBtnStyle),
-    '「点検後データを書き出す」ボタンは「全データをリセット」ボタンと完全に同じ見た目 (got export: ' + JSON.stringify(exportBtnStyle) + ' / reset: ' + JSON.stringify(resetBtnStyle) + ')');
+  assert(exportBtnStyle.height === '50px' && parseFloat(exportBtnStyle.borderRadius) >= 20,
+    '「点検後データを書き出す」ボタンは引き続きピル型(高さ50px・角丸25px)のまま (got: ' + JSON.stringify(exportBtnStyle) + ')');
 
   const fallbackColor = await page.evaluate(() => getComputedStyle(document.getElementById('openExportFallbackManual')).color);
   assert(rgbToHex(fallbackColor) === DARK_BLUE, '「ダウンロードできない場合はこちら」の文字が濃いめの青 (got: ' + fallbackColor + ')');
