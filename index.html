@@ -497,11 +497,138 @@
     height: 36px; border-top: 1.5px solid var(--border-dark); border-bottom: 1.5px solid var(--border-dark);
     pointer-events: none;
   }
-  #settingsMenuPopup, #gridModePopup {
+  #settingsMenuPopup, #gridModePopup, #fontSizePopup {
     position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
     background: var(--navy-card); border: 1px solid var(--border-dark); border-radius: 16px;
     padding: 18px; box-shadow: 0 12px 32px rgba(0,0,0,0.28); z-index: 998; width: min(320px, 88vw);
   }
+  /* 2026-07-22追加: 「設定」画面のリデザイン。Apple純正設定アプリ／Notion／Linearのような
+     ミニマルなデザインを目指し、セクション分け(セキュリティ／現場設定／表示設定／
+     データ管理)したカード型リストに変更した(添付デザイン参考)。#settingsMenuPopup自体は
+     既存のid・位置指定用の土台(#settingsMenuPopup, #gridModePopupの共通ルール、上記)を
+     そのまま流用し、.settings-v2-popupで見た目だけを上書きする。中身の各ボタン
+     (settingsMenuLockBtn・resetDataBtn等)も既存のidをそのまま残しており、クリック時の
+     動作(それぞれのイベントリスナー)には変更を加えていない(「現場テストモード」の
+     ON/OFF切替のみ、ポップアップ選択式からその場でタップするiOS風トグルに変更した。
+     詳細はJS側のsetFieldTestMode関連コメントを参照)。 */
+  #settingsMenuPopup.settings-v2-popup, #lockModePopup.settings-v2-popup,
+  #fontSizePopup.settings-v2-popup, #gridModePopup.settings-v2-popup,
+  #uploadChoiceDialog.settings-v2-popup {
+    background: #F5F7FA; border: none; border-radius: 24px; padding: 0;
+    width: min(360px, 90vw); max-height: min(86vh, calc(100vh - 60px)); max-height: min(86dvh, calc(100dvh - 60px));
+    overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.24), 0 2px 8px rgba(17,24,39,0.06);
+    text-align: left;
+  }
+  /* 2026-07-22追加: 「データを読み込む」ダイアログ(#uploadChoiceDialog)専用のカードUI。
+     点検報告書／点検希望時間連絡票の2択を、大きな青いボタンから、アイコン＋タイトル＋説明＋
+     シェブロンのカード型リストに変更した(添付デザイン参考)。 */
+  .upload-choice-desc {
+    font-size: calc(14px * var(--font-scale, 1)); color: #6B7280; line-height: 1.5; margin: 0 0 16px;
+  }
+  .upload-choice-cards { display: flex; flex-direction: column; gap: 12px; margin-bottom: 6px; }
+  .upload-choice-card {
+    width: 100%; box-sizing: border-box; min-height: 92px; padding: 14px 16px; border-radius: 20px;
+    border: 1.5px solid #E5E7EB; background: #FFFFFF; display: flex; align-items: center; gap: 14px;
+    cursor: pointer; text-align: left; font-family: inherit; font-weight: 700;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06); transition: background 0.12s ease, border-color 0.12s ease;
+  }
+  .upload-choice-card:hover, .upload-choice-card:active { background: #EFF6FF; border-color: #BFDBFE; }
+  .upload-choice-card-icon {
+    width: 44px; height: 44px; border-radius: 12px; background: #EFF6FF; color: #1677FF;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .upload-choice-card-icon svg { width: 22px; height: 22px; }
+  .upload-choice-card-icon-teal { background: #ECFDF5; color: #10B981; }
+  .upload-choice-card-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .upload-choice-card-title { font-size: calc(16px * var(--font-scale, 1)); font-weight: 800; color: #1B2333; }
+  .upload-choice-card-sub { font-size: calc(12.5px * var(--font-scale, 1)); color: #9AA3B2; font-weight: 500; line-height: 1.4; }
+  .settings-v2-header {
+    display: flex; align-items: center; gap: 12px; padding: 24px 20px 4px;
+  }
+  .settings-v2-header-icon {
+    width: 40px; height: 40px; border-radius: 50%; background: #EFF6FF; color: #1677FF;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .settings-v2-header-icon svg { width: 22px; height: 22px; }
+  .settings-v2-header-title { flex: 1; font-size: calc(19px * var(--font-scale, 1)); font-weight: 800; color: #1B2333; }
+  .settings-v2-close-x {
+    width: 32px; height: 32px; border-radius: 50%; border: none; background: transparent; color: #9AA3B2;
+    display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;
+  }
+  .settings-v2-close-x svg { width: 18px; height: 18px; }
+  .settings-v2-body { padding: 12px 20px 4px; }
+  .settings-v2-section { margin-bottom: 22px; }
+  .settings-v2-section-title {
+    display: flex; align-items: center; gap: 7px; font-size: calc(13px * var(--font-scale, 1)); font-weight: 800;
+    color: #6B7280; margin: 0 2px 8px; letter-spacing: 0.02em;
+  }
+  .settings-v2-section-title svg { width: 15px; height: 15px; }
+  .settings-v2-card {
+    background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 18px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06); overflow: hidden;
+  }
+  .settings-v2-row {
+    width: 100%; box-sizing: border-box; min-height: 64px; padding: 12px 16px;
+    display: flex; align-items: center; gap: 12px; border: none; border-bottom: 1px solid #F0F1F4;
+    background: #FFFFFF; color: #1B2333; font-family: inherit; text-align: left; cursor: pointer;
+  }
+  .settings-v2-card > .settings-v2-row:last-child { border-bottom: none; }
+  .settings-v2-row-icon {
+    width: 34px; height: 34px; border-radius: 10px; background: #EFF6FF; color: #1677FF;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .settings-v2-row-icon svg { width: 18px; height: 18px; }
+  .settings-v2-row-icon-danger { background: #FEF2F2; color: #EF4444; }
+  .settings-v2-row-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .settings-v2-row-title { font-size: calc(15px * var(--font-scale, 1)); font-weight: 700; color: #1B2333; }
+  .settings-v2-row-danger .settings-v2-row-title { color: #EF4444; }
+  .settings-v2-row-sub { font-size: calc(12px * var(--font-scale, 1)); color: #9AA3B2; font-weight: 500; }
+  .settings-v2-chevron { color: #C4CAD4; flex-shrink: 0; display: flex; }
+  .settings-v2-chevron svg { width: 18px; height: 18px; }
+  /* iOS風トグルスイッチ(現場テストモード用)。ボタン自体をスイッチの形にし、ON/OFFの状態を
+     色(グレー/ブルー)とつまみの左右位置(CSSのtransform)で表す。 */
+  .settings-v2-switch {
+    width: 50px; height: 30px; border-radius: 15px; border: none; background: #D1D5DB;
+    position: relative; flex-shrink: 0; padding: 0; cursor: pointer; transition: background 0.15s ease;
+  }
+  .settings-v2-switch[aria-checked="true"] { background: #1677FF; }
+  .settings-v2-switch-knob {
+    position: absolute; top: 2px; left: 2px; width: 26px; height: 26px; border-radius: 50%;
+    background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.25); transition: transform 0.15s ease;
+  }
+  .settings-v2-switch[aria-checked="true"] .settings-v2-switch-knob { transform: translateX(20px); }
+  .settings-v2-close-btn {
+    display: block; width: calc(100% - 40px); margin: 8px 20px 20px; height: 52px; border-radius: 16px;
+    border: 1px solid #E5E7EB; background: #FFFFFF; color: #1B2333; font-weight: 700;
+    font-size: calc(15px * var(--font-scale, 1)); font-family: inherit; cursor: pointer;
+  }
+  /* 文字サイズ・画面ロック解除方法・表示モードの各選択肢一覧(#fontSizePopup・#lockModePopup・
+     #gridModePopup)も、ボタン然としたカード型ではなく、この設定画面と揃えたフラットな
+     リスト行(区切り線のみ、選択中はチェックマークのみで示す)に統一する。 */
+  .settings-v2-option-list {
+    background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 18px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06); overflow: hidden; margin-bottom: 14px;
+  }
+  .settings-v2-option-list .font-size-option,
+  .settings-v2-option-list .lock-mode-option,
+  .settings-v2-option-list .grid-mode-option {
+    width: 100%; box-sizing: border-box; min-height: 56px; border-radius: 0; border: none;
+    border-bottom: 1px solid #F0F1F4; background: #FFFFFF; color: #1B2333; font-family: inherit;
+    font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 18px;
+  }
+  .settings-v2-option-list > button:last-child { border-bottom: none; }
+  .settings-v2-option-list .font-size-option[data-active="true"],
+  .settings-v2-option-list .lock-mode-option[data-active="true"],
+  .settings-v2-option-list .grid-mode-option[data-active="true"] {
+    background: #FFFFFF; border-color: #F0F1F4; color: #1677FF; font-weight: 800;
+  }
+  .settings-v2-option-list .font-size-option-check { color: #1677FF; }
+  .settings-v2-subpage-title {
+    display: flex; align-items: center; gap: 10px; font-size: calc(18px * var(--font-scale, 1)); font-weight: 800;
+    color: #1B2333; padding: 20px 20px 14px;
+  }
+  .settings-v2-subpage-title svg { width: 20px; height: 20px; color: #1677FF; }
   .font-size-option-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
   /* 2026-07-19追加: 「上部ナビの＋ボタンを文字サイズ変更と同じように選べるようにする」の
      ご指示により、表示モード選択のポップアップにも同じ見た目(.font-size-option相当)を
@@ -561,22 +688,11 @@
     font-weight: 800; font-size: calc(15px * var(--font-scale, 1));
   }
 
-  /* 2026-07-20改善⑤: 「現場テストモード」設定・結果表示用。既存の#exportConfirmPanel
+  /* 2026-07-20改善⑤: 「現場テストモード」結果表示用。既存の#exportConfirmPanel
      (点検後データ書き出し確認画面)と同じ、中央配置のスクロール可能なカード型パネルの
-     見た目に合わせている。専用クラス(.field-test-mode-option)を使い、既存の
-     .lock-mode-option等のイベントリスナーには一切引っかからないようにしている。 */
-  #fieldTestModePopup {
-    position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
-    background: var(--navy-card); border: 1px solid var(--border-dark); border-radius: 16px;
-    padding: 18px; box-shadow: 0 12px 32px rgba(0,0,0,0.28); z-index: 998; width: min(340px, 88vw);
-  }
-  .field-test-mode-option {
-    width: 100%; box-sizing: border-box; min-height: 52px; border-radius: 10px; border: 1.5px solid var(--border-dark);
-    background: var(--navy-card-2); color: var(--text-hi); font-family: inherit; font-weight: 700; cursor: pointer;
-    display: flex; align-items: center; justify-content: space-between; padding: 0 16px;
-  }
-  .field-test-mode-option[data-active="true"] { border-color: var(--blue); background: var(--blue-soft); color: var(--blue); }
-  .field-test-mode-option[data-active="true"] .font-size-option-check { visibility: visible; }
+     見た目に合わせている。
+     [2026-07-22変更] ON/OFF選択ポップアップ(#fieldTestModePopup)・専用クラス
+     (.field-test-mode-option)は、設定画面のiOS風トグルスイッチ化に伴い廃止した。 */
   #fieldTestResultsPanel {
     display: none; position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
     width: min(480px, 92vw); max-height: min(86vh, calc(100vh - 200px)); max-height: min(86dvh, calc(100dvh - 200px)); overflow-y: auto;
@@ -871,7 +987,12 @@
   .room-card-sensor { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 16px 12px; }
   .room-card-sensor .room-num-row { justify-content: center; }
   .room-card-sensor .room-num { font-size: calc(22px * var(--font-scale, 1)); }
-  .ladder-badge { position:absolute; top: 8px; left: 10px; font-size: calc(9px * var(--font-scale, 1)); color: #B9BFC9; background:#F1F3F6; border-radius:4px; padding:1px 4px; }
+  /* 2026-07-21修正: 「右上にはしごの表示ができて部屋番号が隠れている」への対応で、
+     position:absoluteによるカード左上への重ね表示をやめ、.room-num-row内の通常の
+     インライン要素(部屋番号の直後)に変更した。部屋番号の文字と重ならなくなったため、
+     絶対配置指定(position/top/left)は不要になった。見た目(文字サイズ・色・背景・角丸)は
+     変更していない。 */
+  .ladder-badge { display: inline-block; align-self: center; font-size: calc(9px * var(--font-scale, 1)); color: #B9BFC9; background:#F1F3F6; border-radius:4px; padding:1px 4px; }
   .ha-badge { font-size: calc(13px * var(--font-scale, 1)); font-weight: 800; color: #1B2333; }
   /* 2026-07-19: 「拡大表示」(個々のカードを大きく)モードの廃止に伴い、専用の.ha-badge拡大
      ルールは不要になった(密なグリッドモードでは.ha-badge自体を非表示にしている)。 */
@@ -1019,6 +1140,46 @@
     height: 50px; border-radius: 25px; font-size: calc(14px * var(--font-scale, 1)); font-weight: 700;
     border: none; background: var(--blue); color: #fff; flex: none; box-shadow: 0 1px 2px rgba(0,0,0,0.08);
     display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  /* 2026-07-22追加: 削除確認ダイアログ(#scheduleDayDeleteConfirm・#resetDataConfirmDialog・
+     #progressLogDeleteConfirm)を、添付頂いたデザイン参考(iOS純正アプリのような高級感、広い
+     余白、重要な操作だけが目立つUI)に合わせてリデザイン。既存の.confirm-dialog(位置・
+     display・z-index等の土台)はそのまま流用し、見た目だけをこの.confirm-dialog-v2で
+     上書きする(#uploadChoiceDialog・#pinSetupDialogなど、削除以外の用途の.confirm-dialogは
+     この対象に含めていないため影響しない)。 */
+  .confirm-dialog-v2 {
+    width: min(360px, 90vw); border-radius: 28px; padding: 32px 28px 28px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.28), 0 2px 8px rgba(17,24,39,0.06);
+  }
+  .confirm-dialog-v2-icon {
+    width: 68px; height: 68px; border-radius: 50%; background: #EFF6FF; color: #1677FF;
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 18px;
+  }
+  /* 全データをリセット(取り消せない一括削除)だけは、他の2つ(日程削除・記録削除)より
+     深刻な操作であることが見た目でも伝わるよう、アイコンの色調を赤系に変える。 */
+  .confirm-dialog-v2-icon.confirm-dialog-v2-icon-danger { background: #FEF2F2; color: #EF4444; }
+  .confirm-dialog-v2-icon svg { width: 34px; height: 34px; }
+  .confirm-dialog-v2 .confirm-dialog-title {
+    font-size: calc(25px * var(--font-scale, 1)); font-weight: 800; color: #1B2333;
+    margin-bottom: 10px; line-height: 1.3;
+  }
+  .confirm-dialog-v2 .confirm-dialog-body {
+    font-size: calc(17px * var(--font-scale, 1)); color: #6B7280; line-height: 1.5; margin-bottom: 28px;
+  }
+  .confirm-dialog-v2 .confirm-dialog-buttons { gap: 12px; }
+  .confirm-dialog-v2 .confirm-dialog-buttons button {
+    flex: 1; height: 56px; border-radius: 17px; font-size: calc(17px * var(--font-scale, 1));
+    font-weight: 700; border: 1.5px solid #E3E5EA; background: #fff; color: #1B2333;
+  }
+  .confirm-dialog-v2 .confirm-dialog-buttons button.confirm-dialog-v2-danger {
+    background: #EF4444; border-color: #EF4444; color: #fff;
+  }
+  /* 削除確認ダイアログ表示中だけ、背景をぼかしつつ少し暗くする(iOSのアラート風)。他の
+     モーダル(#panel・#photoPanel等)は共通の#modalBackdropを使うため、このクラスを
+     JS側でこの3ダイアログの表示中だけ付け外しし、他のモーダルの見た目には影響しないようにする。 */
+  .modal-backdrop-strong {
+    background: rgba(0,0,0,0.3) !important;
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
   }
   #stampScanPanel {
     display: none; position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
@@ -1185,9 +1346,20 @@
   .modal-backdrop {
     display: none; position: fixed; inset: 0; background: rgba(14,27,51,0.55); z-index: 900;
   }
+  /* [2026-07-21変更] これまで#panelは上下中央寄せ(top:50%)にしていたため、サイン画面のように
+     内容が短い場合、上下に均等な余白ができて背後の部屋一覧が見えてしまい「間延びする」との
+     ご指摘があった。画面上部にできる隙間を無くすため、上下中央寄せをやめて画面上部に寄せる
+     位置指定に変更した(内容が短い場合の余白は下だけに残る)。
+     下端の安全マージンは、2026-07-19の「モーダルの下端が.bottom-navの裏に回り込む」対策
+     (90px≒下部ナビの実高さ相当。以前はcalc(100vh - 200px)を中央寄せの上下に均等配分する形で
+     確保していたが、上寄せに変更したため下端側だけに集中させている)を踏襲し、文字サイズが
+     大きい・項目数が多い部屋でもボタンがナビの裏に隠れないようにしている。 */
   #panel {
-    display: none; position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
-    width: min(480px, 92vw); max-height: min(86vh, calc(100vh - 200px)); max-height: min(86dvh, calc(100dvh - 200px)); overflow-y: auto;
+    display: none; position: fixed; left: 50%; top: max(16px, env(safe-area-inset-top)); transform: translateX(-50%);
+    width: min(480px, 92vw);
+    max-height: min(86vh, calc(100vh - max(16px, env(safe-area-inset-top)) - 90px - env(safe-area-inset-bottom)));
+    max-height: min(86dvh, calc(100dvh - max(16px, env(safe-area-inset-top)) - 90px - env(safe-area-inset-bottom)));
+    overflow-y: auto;
     background: var(--navy-card); border: 1px solid var(--border-dark); border-radius: 16px;
     padding: 16px; box-shadow: 0 12px 32px rgba(0,0,0,0.28); z-index: 901;
   }
@@ -1679,57 +1851,85 @@
     <div id="progressDefectList"></div>
   </div>
 
-  <!-- 2026-07-19再修正: 「各名前の前にダウンロードアイコンをつける。文字は物件データを
-       読み込むぐらいの太さと大きさにする」のご指示により、選択肢のボタンに、設定情報欄で
-       使っていたダウンロードアイコンと、同じ太さ・丸み(.settings-toggle-btn)の見た目を
-       適用した。 -->
-  <!-- [2026-07-20改善: 修正内容] 「物件データ読み込みのキャンセルを削除して右上に✖️にする」
-       のご指示により、下段にあったフルサイズの「キャンセル」ボタンを廃止し、他パネル
-       (例: #exportConfirmPanel の#closeExportConfirm)と同じ.close-x-btnの見た目で、
-       ダイアログ右上に×の閉じるボタンを配置する形に変更した。ボタンのid(uploadChoiceCancel)
-       ・クリック時の挙動(ダイアログを閉じるだけ)は変更していないため、対応するJS側の
-       クリックリスナー(document.getElementById('uploadChoiceCancel').addEventListener(...))は
-       そのまま流用でき、追加の変更は不要。 -->
-  <div id="uploadChoiceDialog" class="confirm-dialog">
-    <button type="button" id="uploadChoiceCancel" class="close-x-btn" aria-label="閉じる" style="position:absolute; top:6px; right:6px;">×</button>
-    <div class="confirm-dialog-title">物件データを読み込む</div>
-    <div class="confirm-dialog-body">読み込むデータの種類を選んでください</div>
-    <div class="confirm-dialog-buttons" style="flex-direction:column; gap:8px;">
-      <button type="button" class="settings-toggle-btn settings-toggle-btn-blue" id="uploadChoiceReport">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 19h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        点検報告書
-      </button>
-      <button type="button" class="settings-toggle-btn settings-toggle-btn-blue" id="uploadChoiceStamp">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 19h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        点検希望時間連絡票
+  <!-- 2026-07-22リデザイン: 「データを読み込む」ダイアログをApple風のカード型UIに変更した
+       (添付デザイン参考)。「青い大きなボタン」(.settings-toggle-btn-blueの単色塗りつぶし)を
+       廃止し、アイコン＋タイトル＋説明＋シェブロンのカードに変更。
+       [2026-07-20改善からの変更点] 2026-07-20には「キャンセルを削除して右上に✖️にする」との
+       ご指示で下部のキャンセルボタンを廃止していたが、今回の添付デザインで「下部はキャンセル
+       のみ配置」と改めて明示されたため、フルサイズの「キャンセル」ボタンを下部に復活させた
+       (ボタンのid=uploadChoiceCancelは維持しているため、既存のクリックリスナーはそのまま
+       流用でき、追加の変更は不要)。右上の×ボタンは新しいid(uploadChoiceCloseX)で追加し、
+       どちらからでも閉じられるようにしている(添付デザイン2枚目と同じ構成)。 -->
+  <div id="uploadChoiceDialog" class="confirm-dialog settings-v2-popup">
+    <div class="settings-v2-header">
+      <div class="settings-v2-header-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+      </div>
+      <div class="settings-v2-header-title">データを読み込む</div>
+      <button type="button" id="uploadChoiceCloseX" class="settings-v2-close-x" aria-label="閉じる">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
       </button>
     </div>
+    <div class="settings-v2-body" style="padding-top:0;">
+      <div class="upload-choice-desc">読み込むデータの種類を選択してください。</div>
+      <div class="upload-choice-cards">
+        <button type="button" class="upload-choice-card" id="uploadChoiceReport">
+          <span class="upload-choice-card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="13" x2="15" y2="13"></line><line x1="9" y1="17" x2="15" y2="17"></line></svg>
+          </span>
+          <span class="upload-choice-card-text">
+            <span class="upload-choice-card-title">点検報告書</span>
+            <span class="upload-choice-card-sub">点検結果や不良内容を読み込みます</span>
+          </span>
+          <span class="settings-v2-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg></span>
+        </button>
+        <button type="button" class="upload-choice-card" id="uploadChoiceStamp">
+          <span class="upload-choice-card-icon upload-choice-card-icon-teal" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"></rect><line x1="16" y1="3" x2="16" y2="7"></line><line x1="8" y1="3" x2="8" y2="7"></line><line x1="3" y1="10" x2="21" y2="10"></line><line x1="8.5" y1="16" x2="15.5" y2="16"></line></svg>
+          </span>
+          <span class="upload-choice-card-text">
+            <span class="upload-choice-card-title">点検希望時間連絡票</span>
+            <span class="upload-choice-card-sub">住人の希望時間を読み込みます</span>
+          </span>
+          <span class="settings-v2-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg></span>
+        </button>
+      </div>
+    </div>
+    <button type="button" id="uploadChoiceCancel" class="settings-v2-close-btn">キャンセル</button>
   </div>
 
   <!-- 2026-07-19追加: 「誤作動が心配」のご指摘への対応。「全データをリセット」は取り返しの
        つかない操作のため、確認方法をブラウザ標準のwindow.confirm()(環境によっては表示されず
        ボタンが反応しないように見えることがある、日程削除等で既に判明していた問題)から、
-       アプリ内蔵のこの確認ダイアログに変更した。さらに「リセット」という文字を入力しないと
-       実行ボタンが押せないようにし、誤タップだけでは絶対に実行されないようにしている。 -->
-  <div id="resetDataConfirmDialog" class="confirm-dialog">
-    <div class="confirm-dialog-title" style="color:#DC2626;">⚠ 全データをリセットします</div>
-    <div class="confirm-dialog-body">サイン・写真・点検状況など、全てのデータを削除します。この操作は元に戻せません。<br>よろしければ下の欄に「リセット」と入力してください。</div>
-    <input type="text" id="resetDataConfirmInput" placeholder="リセット" autocomplete="off" style="width:100%; box-sizing:border-box; height:48px; border-radius:10px; border:1px solid var(--border-dark); background:var(--navy-card-2); color:var(--text-hi); font-size:calc(15px * var(--font-scale, 1)); text-align:center; margin-bottom:14px;">
+       アプリ内蔵のこの確認ダイアログに変更した。
+       [2026-07-21変更] 「リセット」という文字を入力しないと実行できない方式は手間が大きい
+       とのご指摘を受け、他の取り返しのつかない操作(点検日程の削除確認 #scheduleDayDeleteConfirm
+       等)と同じ、OK/キャンセルの2択タップのみの確認に統一した。確認ダイアログ自体は残して
+       いるため、誤タップ1回だけで即座に実行されることはない。 -->
+  <div id="resetDataConfirmDialog" class="confirm-dialog confirm-dialog-v2">
+    <div class="confirm-dialog-v2-icon confirm-dialog-v2-icon-danger" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2L12 3z"></path><line x1="12" y1="9" x2="12" y2="14"></line><line x1="12" y1="17.5" x2="12" y2="17.51"></line></svg>
+    </div>
+    <div class="confirm-dialog-title">全データをリセットします</div>
+    <div class="confirm-dialog-body">サイン・写真・点検状況・点検希望時刻の記録など、全てのデータを削除します。<br>この操作は元に戻せません。よろしいですか？</div>
     <div class="confirm-dialog-buttons">
       <button type="button" id="resetDataConfirmCancel">キャンセル</button>
-      <button type="button" class="primary" id="resetDataConfirmOk" disabled style="background:#DC2626; border-color:#DC2626; opacity:0.4;">リセットする</button>
+      <button type="button" class="primary confirm-dialog-v2-danger" id="resetDataConfirmOk">リセットする</button>
     </div>
   </div>
 
   <!-- 2026-07-17追記: 「点検日程の×が機能しない」への対応。環境によってはブラウザ標準の
        confirm()ダイアログが表示されない(タップしても何も起きないように見える)ことがあるため、
        点検日程の削除確認は、アプリ内で完結するこの独自ダイアログに置き換えた。 -->
-  <div id="scheduleDayDeleteConfirm" class="confirm-dialog">
+  <div id="scheduleDayDeleteConfirm" class="confirm-dialog confirm-dialog-v2">
+    <div class="confirm-dialog-v2-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"></rect><line x1="16" y1="3" x2="16" y2="7"></line><line x1="8" y1="3" x2="8" y2="7"></line><line x1="3" y1="10" x2="21" y2="10"></line><circle cx="17" cy="17" r="4.2" fill="#EFF6FF" stroke="currentColor"></circle><line x1="15.2" y1="17" x2="18.8" y2="17"></line></svg>
+    </div>
     <div class="confirm-dialog-title">日程を削除します</div>
     <div class="confirm-dialog-body" id="scheduleDayDeleteConfirmBody">よろしいですか？</div>
     <div class="confirm-dialog-buttons">
       <button type="button" id="scheduleDayDeleteCancel">キャンセル</button>
-      <button type="button" class="primary" id="scheduleDayDeleteConfirmBtn" style="background:#DC2626; border-color:#DC2626;">削除する</button>
+      <button type="button" class="primary confirm-dialog-v2-danger" id="scheduleDayDeleteConfirmBtn">削除する</button>
     </div>
   </div>
 
@@ -1737,12 +1937,15 @@
        既に実装済みだったが、window.confirm()で確認していたため、点検日程の×と同様に環境に
        よっては確認ダイアログが表示されず、削除ボタンが反応しないように見えるバグがあった。
        同じ独自ダイアログの仕組みに置き換えて解消した。 -->
-  <div id="progressLogDeleteConfirm" class="confirm-dialog">
+  <div id="progressLogDeleteConfirm" class="confirm-dialog confirm-dialog-v2">
+    <div class="confirm-dialog-v2-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
+    </div>
     <div class="confirm-dialog-title">記録を削除します</div>
     <div class="confirm-dialog-body">この記録を削除します。よろしいですか？</div>
     <div class="confirm-dialog-buttons">
       <button type="button" id="progressLogDeleteCancel">キャンセル</button>
-      <button type="button" class="primary" id="progressLogDeleteConfirmBtn" style="background:#DC2626; border-color:#DC2626;">削除する</button>
+      <button type="button" class="primary confirm-dialog-v2-danger" id="progressLogDeleteConfirmBtn">削除する</button>
     </div>
   </div>
 
@@ -2160,69 +2363,189 @@
   <button type="button" id="dateCancelBtn" style="width:100%; height:44px; background:none; border:none; color:var(--text-mid); font-size: calc(13px * var(--font-scale, 1));">キャンセル</button>
 </div>
 
-<!-- 2026-07-19追加: 「上部ナビゲーションに⚙️マークを1番右に追加する。その際にロック画面や
-     文字サイズ変更をそこに入れる」のご指示により、旧#fontSizePopup(文字サイズのみ)を廃止し、
-     画面ロックボタンも含めた#settingsMenuPopupに統合した。 -->
-<div id="settingsMenuPopup" style="display:none;">
-  <div class="capture-popup-title">設定</div>
-  <button type="button" id="settingsMenuLockBtn" class="font-size-option" style="justify-content:flex-start; gap:10px; margin-bottom:14px;">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="10" rx="2" stroke="currentColor" stroke-width="2.2"/><path d="M7 10V7a5 5 0 0110 0v3" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
-    画面をロックする
-  </button>
-  <!-- 2026-07-20改善④: 新規追加。「画面ロック解除方法」をタップで解除(既定)/4桁PINで解除
-       から選べるようにした。PIN未設定の状態でPIN解除を選ぶと、設定フロー(#pinSetupDialog)
-       が開き、実際にPINが設定できた場合のみPIN解除が有効になる。 -->
-  <button type="button" id="settingsMenuLockModeBtn" class="settings-menu-item-btn">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/></svg>
-    画面ロック解除方法
-  </button>
-  <!-- 2026-07-20改善③: 新規追加。初回起動時の3ステップ操作ガイド(#onboardingOverlay)を
-       いつでも手動で再表示できるようにする入口。 -->
-  <button type="button" id="settingsMenuOnboardingBtn" class="settings-menu-item-btn">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M9.5 9a2.5 2.5 0 114.2 1.8c-.9.8-1.7 1.2-1.7 2.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="16.3" r="1" fill="currentColor"/></svg>
-    操作ガイドを見る
-  </button>
-  <!-- 2026-07-20改善⑤: 新規追加。「現場テストモード」(既定OFF)と、その計測結果を確認する
-       「現場テスト結果を見る」の入口。計測データはReport Flowへ渡す通常の点検データとは
-       完全に分離し、専用のlocalStorageキー(FIELD_TEST_DATA_KEY)にのみ保存する。 -->
-  <button type="button" id="settingsMenuFieldTestModeBtn" class="settings-menu-item-btn">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 8v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    <span id="fieldTestModeBtnLabel">現場テストモード：OFF</span>
-  </button>
-  <button type="button" id="settingsMenuFieldTestResultsBtn" class="settings-menu-item-btn">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 19h16M7 19v-6m5 6V8m5 11v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    現場テスト結果を見る
-  </button>
-  <div class="capture-popup-title">文字サイズ</div>
-  <div class="font-size-option-list">
-    <button type="button" class="font-size-option" data-scale="1" style="font-size: calc(14px * var(--font-scale, 1));">標準<span class="font-size-option-check">✓</span></button>
-    <button type="button" class="font-size-option" data-scale="1.15" style="font-size: calc(16px * var(--font-scale, 1));">大<span class="font-size-option-check">✓</span></button>
-    <button type="button" class="font-size-option" data-scale="1.3" style="font-size: calc(18px * var(--font-scale, 1));">特大<span class="font-size-option-check">✓</span></button>
+<!-- 2026-07-22リデザイン: 「設定」画面をApple純正設定アプリ／Notion／Linear風のミニマルな
+     セクション分けカードリストに変更した(添付デザイン参考)。中身の各ボタンのid・クリック時の
+     動作は、現場テストモード(iOS風トグルに変更)を除いてすべて既存のまま。 -->
+<div id="settingsMenuPopup" class="settings-v2-popup" style="display:none;">
+  <div class="settings-v2-header">
+    <div class="settings-v2-header-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09A1.65 1.65 0 0015 4.6a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"></path></svg>
+    </div>
+    <div class="settings-v2-header-title">設定</div>
+    <button type="button" id="settingsMenuCloseX" class="settings-v2-close-x" aria-label="閉じる">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
   </div>
-  <!-- 2026-07-19追加: 「REPORT FLOWのアイコンアプリ」に続くご指示で、物件情報タブの
-       「設定情報」欄(読み込み・リセット)を撤去した際、「全データをリセット」の行き先として
-       ここ(歯車メニュー)を選んでいただいた(画面ロック・文字サイズと同じ、上部ナビから
-       1タップで開ける場所)。危険な操作のため、枠・文字色をオレンジ系にして見分けやすくして
-       いる。ボタンのid(resetDataBtn)・クリック時の確認ダイアログ(#resetDataConfirmDialog)は
-       物件情報タブにあった頃から変更していない。 -->
-  <div class="capture-popup-title" style="color:var(--brand-orange-dark-text);">データ管理</div>
-  <button type="button" id="resetDataBtn" class="font-size-option font-size-option-danger" style="justify-content:flex-start; gap:10px; margin-bottom:14px;">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V5a2 2 0 012-2h2a2 2 0 012 2v2m-9 0v12a2 2 0 002 2h6a2 2 0 002-2V7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    全データをリセット
-  </button>
-  <button type="button" id="settingsMenuCancelBtn" style="width:100%; height:44px; background:none; border:none; color:var(--text-mid); font-size: calc(13px * var(--font-scale, 1));">閉じる</button>
+  <div class="settings-v2-body">
+    <div class="settings-v2-section">
+      <div class="settings-v2-section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+        セキュリティ
+      </div>
+      <div class="settings-v2-card">
+        <button type="button" id="settingsMenuLockBtn" class="settings-v2-row">
+          <span class="settings-v2-row-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0110 0v4"></path></svg>
+          </span>
+          <span class="settings-v2-row-text">
+            <span class="settings-v2-row-title">画面をロックする</span>
+            <span class="settings-v2-row-sub">端末を固定して誤操作を防ぎます</span>
+          </span>
+          <span class="settings-v2-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg></span>
+        </button>
+        <!-- 2026-07-20改善④: 「画面ロック解除方法」をタップで解除(既定)/4桁PINで解除から
+             選べるようにした。PIN未設定の状態でPIN解除を選ぶと、設定フロー(#pinSetupDialog)
+             が開き、実際にPINが設定できた場合のみPIN解除が有効になる。 -->
+        <button type="button" id="settingsMenuLockModeBtn" class="settings-v2-row">
+          <span class="settings-v2-row-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"></circle><path d="M21 2l-9.6 9.6"></path><path d="M15.5 7.5l3 3L22 7l-3-3"></path></svg>
+          </span>
+          <span class="settings-v2-row-text">
+            <span class="settings-v2-row-title">画面ロック解除方法</span>
+            <span class="settings-v2-row-sub">PINコード・パスコードを設定</span>
+          </span>
+          <span class="settings-v2-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="settings-v2-section">
+      <div class="settings-v2-section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"></path></svg>
+        現場設定
+      </div>
+      <div class="settings-v2-card">
+        <!-- 2026-07-20改善③: 初回起動時の3ステップ操作ガイド(#onboardingOverlay)をいつでも
+             手動で再表示できるようにする入口。 -->
+        <button type="button" id="settingsMenuOnboardingBtn" class="settings-v2-row">
+          <span class="settings-v2-row-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"></path></svg>
+          </span>
+          <span class="settings-v2-row-text"><span class="settings-v2-row-title">操作ガイドを見る</span></span>
+          <span class="settings-v2-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg></span>
+        </button>
+        <!-- 2026-07-20改善⑤: 「現場テストモード」(既定OFF)。計測データはReport Flowへ渡す
+             通常の点検データとは完全に分離し、専用のlocalStorageキー(FIELD_TEST_DATA_KEY)
+             にのみ保存する。
+             [2026-07-22変更] 従来はタップするとON/OFFの選択ポップアップ(#fieldTestModePopup)
+             が開く方式だったが、「iOS風Switchへ変更」のご依頼を受け、行全体をタップすると
+             その場で即座にON/OFFが切り替わるトグルスイッチ方式に変更した(ポップアップ自体を
+             廃止)。 -->
+        <div id="settingsMenuFieldTestModeBtn" class="settings-v2-row" style="cursor:pointer;" role="switch" aria-checked="false">
+          <span class="settings-v2-row-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6"></path><path d="M10 3v6.5L4.5 19a1.5 1.5 0 001.3 2.2h12.4a1.5 1.5 0 001.3-2.2L14 9.5V3"></path><path d="M8.5 15h7"></path></svg>
+          </span>
+          <span class="settings-v2-row-text">
+            <span class="settings-v2-row-title">現場テストモード</span>
+            <span class="settings-v2-row-sub" id="fieldTestModeBtnLabel">操作時間を記録します</span>
+          </span>
+          <button type="button" id="fieldTestModeSwitch" class="settings-v2-switch" role="presentation" tabindex="-1" aria-checked="false" aria-hidden="true"><span class="settings-v2-switch-knob"></span></button>
+        </div>
+        <button type="button" id="settingsMenuFieldTestResultsBtn" class="settings-v2-row">
+          <span class="settings-v2-row-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="19" x2="20" y2="19"></line><rect x="6" y="12" width="3" height="7"></rect><rect x="13" y="8" width="3" height="11"></rect><rect x="17.5" y="4" width="0" height="0"></rect></svg>
+          </span>
+          <span class="settings-v2-row-text"><span class="settings-v2-row-title">現場テスト結果を見る</span></span>
+          <span class="settings-v2-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="settings-v2-section">
+      <div class="settings-v2-section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>
+        表示設定
+      </div>
+      <div class="settings-v2-card">
+        <button type="button" id="settingsMenuFontSizeBtn" class="settings-v2-row">
+          <span class="settings-v2-row-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>
+          </span>
+          <span class="settings-v2-row-text">
+            <span class="settings-v2-row-title">文字サイズ</span>
+            <span class="settings-v2-row-sub" id="fontSizeCurrentLabel">標準</span>
+          </span>
+          <span class="settings-v2-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg></span>
+        </button>
+        <!-- 2026-07-22追加: 添付デザイン参考の「表示モード」行。既存の#gridModePopup(標準/全体、
+             上部ナビの#gridExpandToggleから開くものと同一)への、設定画面からの入口を追加した
+             (#gridExpandToggle自体の動作はそのまま)。 -->
+        <button type="button" id="settingsMenuGridModeBtn" class="settings-v2-row">
+          <span class="settings-v2-row-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+          </span>
+          <span class="settings-v2-row-text">
+            <span class="settings-v2-row-title">表示モード</span>
+            <span class="settings-v2-row-sub" id="gridModeCurrentLabel">標準</span>
+          </span>
+          <span class="settings-v2-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 2026-07-19追加: 「REPORT FLOWのアイコンアプリ」に続くご指示で、物件情報タブの
+         「設定情報」欄(読み込み・リセット)を撤去した際、「全データをリセット」の行き先として
+         ここ(歯車メニュー)を選んでいただいた。取り消せない危険な操作のため、赤系の配色にして
+         他の項目と見分けやすくしている。ボタンのid(resetDataBtn)・クリック時の確認ダイアログ
+         (#resetDataConfirmDialog、2026-07-22にこちらもリデザイン済み)は変更していない。 -->
+    <div class="settings-v2-section">
+      <div class="settings-v2-section-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+        データ管理
+      </div>
+      <div class="settings-v2-card">
+        <button type="button" id="resetDataBtn" class="settings-v2-row settings-v2-row-danger">
+          <span class="settings-v2-row-icon settings-v2-row-icon-danger" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"></path></svg>
+          </span>
+          <span class="settings-v2-row-text">
+            <span class="settings-v2-row-title">全データをリセット</span>
+            <span class="settings-v2-row-sub">すべてのデータが削除されます</span>
+          </span>
+          <span class="settings-v2-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg></span>
+        </button>
+      </div>
+    </div>
+  </div>
+  <button type="button" id="settingsMenuCancelBtn" class="settings-v2-close-btn">閉じる</button>
 </div>
 
 <!-- 2026-07-20改善④: 画面ロックの解除方法選択ポップアップ。タップで解除(既定・従来通り)/
-     4桁PINで解除 から選ぶ。文字サイズ・表示モードの選択ポップアップと同じ一覧選択の見た目・
-     操作方法(#font-size-option-list相当)にしている。 -->
-<div id="lockModePopup" style="display:none;">
-  <div class="capture-popup-title">画面ロック解除方法</div>
-  <div class="font-size-option-list">
-    <button type="button" class="lock-mode-option" data-lockmode="tap">タップで解除<span class="font-size-option-check">✓</span></button>
-    <button type="button" class="lock-mode-option" data-lockmode="pin">4桁PINで解除<span class="font-size-option-check">✓</span></button>
+     4桁PINで解除 から選ぶ。
+     [2026-07-22リデザイン] 設定画面のリデザインに合わせ、見た目をフラットなリスト形式
+     (.settings-v2-option-list)に統一した。id・クリック時の動作は変更していない。 -->
+<div id="lockModePopup" class="settings-v2-popup" style="display:none;">
+  <div class="settings-v2-subpage-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"></circle><path d="M21 2l-9.6 9.6"></path><path d="M15.5 7.5l3 3L22 7l-3-3"></path></svg>
+    画面ロック解除方法
   </div>
-  <button type="button" id="lockModeCancelBtn" style="width:100%; height:44px; background:none; border:none; color:var(--text-mid); font-size: calc(13px * var(--font-scale, 1));">閉じる</button>
+  <div class="settings-v2-body" style="padding-top:0;">
+    <div class="settings-v2-option-list">
+      <button type="button" class="lock-mode-option" data-lockmode="tap">タップで解除<span class="font-size-option-check">✓</span></button>
+      <button type="button" class="lock-mode-option" data-lockmode="pin">4桁PINで解除<span class="font-size-option-check">✓</span></button>
+    </div>
+  </div>
+  <button type="button" id="lockModeCancelBtn" class="settings-v2-close-btn">閉じる</button>
+</div>
+
+<!-- 2026-07-22追加: 「文字サイズ」選択画面。以前は#settingsMenuPopup内に3つのボタンとして
+     直接埋め込まれていたが、設定画面のリデザインで他の項目(画面ロック解除方法・表示モード)と
+     同じ「行をタップ→専用の選択画面が開く」という一貫した構造にするため、独立したポップアップに
+     切り出した。中身の.font-size-optionボタン自体(id・data-scale・クリックハンドラ)は
+     既存のまま、置き場所と見た目だけを変更している。 -->
+<div id="fontSizePopup" class="settings-v2-popup" style="display:none;">
+  <div class="settings-v2-subpage-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>
+    文字サイズ
+  </div>
+  <div class="settings-v2-body" style="padding-top:0;">
+    <div class="settings-v2-option-list">
+      <button type="button" class="font-size-option" data-scale="1" style="font-size: calc(14px * var(--font-scale, 1));">標準<span class="font-size-option-check">✓</span></button>
+      <button type="button" class="font-size-option" data-scale="1.15" style="font-size: calc(16px * var(--font-scale, 1));">大<span class="font-size-option-check">✓</span></button>
+      <button type="button" class="font-size-option" data-scale="1.3" style="font-size: calc(18px * var(--font-scale, 1));">特大<span class="font-size-option-check">✓</span></button>
+    </div>
+  </div>
+  <button type="button" id="fontSizeCancelBtn" class="settings-v2-close-btn">閉じる</button>
 </div>
 
 <!-- 2026-07-20改善④: 4桁PIN設定ダイアログ。新規設定時に使用し、入力ミスによる
@@ -2240,16 +2563,9 @@
   </div>
 </div>
 
-<!-- 2026-07-20改善⑤: 「現場テストモード」ON/OFF選択ポップアップ。既定はOFF。 -->
-<div id="fieldTestModePopup" style="display:none;">
-  <div class="capture-popup-title">現場テストモード</div>
-  <div class="panel-hint" style="margin-top:0; margin-bottom:12px;">ONにすると、部屋を開いてから点検済みになるまでの時間などを記録します。通常の点検データとは別に保存され、Report Flowへは渡されません。</div>
-  <div class="font-size-option-list">
-    <button type="button" class="field-test-mode-option" data-fieldtestmode="off">OFF（通常。既定）<span class="font-size-option-check">✓</span></button>
-    <button type="button" class="field-test-mode-option" data-fieldtestmode="on">ON（操作時間を記録する）<span class="font-size-option-check">✓</span></button>
-  </div>
-  <button type="button" id="fieldTestModeCancelBtn" style="width:100%; height:44px; background:none; border:none; color:var(--text-mid); font-size: calc(13px * var(--font-scale, 1));">閉じる</button>
-</div>
+<!-- 2026-07-22変更: 「現場テストモード」ON/OFF選択ポップアップ(#fieldTestModePopup)は、
+     設定画面の行自体をiOS風トグルスイッチに変更した(#settingsMenuFieldTestModeBtn参照)ため
+     不要になり廃止した。ON/OFFの切り替えはsetFieldTestMode()を直接呼ぶだけになっている。 -->
 
 <!-- 2026-07-20改善⑤: 現場テストモードで記録した操作時間の結果表示・書き出し画面。
      既存の#exportConfirmPanel(点検後データ書き出し確認画面)と同じ、中央配置の
@@ -2282,13 +2598,18 @@
      [2026-07-20再修正: 「スクロールに変更は破棄します」のご指示により取り消し] 「全体」を
      「スクロール」に改称する変更は破棄し、ボタン表記を元の「全体」に戻した(内部のCSSクラス名
      body.enlargedやグリッドの挙動自体はいずれの変更でも変えていない)。 -->
-<div id="gridModePopup" style="display:none;">
-  <div class="capture-popup-title">表示モード</div>
-  <div class="font-size-option-list">
-    <button type="button" class="grid-mode-option" data-mode="normal" style="font-size: calc(14px * var(--font-scale, 1));">標準<span class="font-size-option-check">✓</span></button>
-    <button type="button" class="grid-mode-option" data-mode="enlarged" style="font-size: calc(14px * var(--font-scale, 1));">全体<span class="font-size-option-check">✓</span></button>
+<div id="gridModePopup" class="settings-v2-popup" style="display:none;">
+  <div class="settings-v2-subpage-title">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+    表示モード
   </div>
-  <button type="button" id="gridModeCancelBtn" style="width:100%; height:44px; background:none; border:none; color:var(--text-mid); font-size: calc(13px * var(--font-scale, 1));">閉じる</button>
+  <div class="settings-v2-body" style="padding-top:0;">
+    <div class="settings-v2-option-list">
+      <button type="button" class="grid-mode-option" data-mode="normal" style="font-size: calc(14px * var(--font-scale, 1));">標準<span class="font-size-option-check">✓</span></button>
+      <button type="button" class="grid-mode-option" data-mode="enlarged" style="font-size: calc(14px * var(--font-scale, 1));">全体<span class="font-size-option-check">✓</span></button>
+    </div>
+  </div>
+  <button type="button" id="gridModeCancelBtn" class="settings-v2-close-btn">閉じる</button>
 </div>
 
 <div id="capturePopup" style="display:none;">
@@ -2886,8 +3207,12 @@
         // 2026-07-20改善: 旧「全体拡大」(body.overview)は廃止したため、現在は
         // body.enlarged配下でのみ、左端カラーボーダーとして表示される)。
         html += '<div data-room="' + room + '" class="room-card room-card-' + st + (isLadderRoom ? ' ladder-room' : '') + '" role="button" tabindex="0">';
-        html += ladder;
-        html += '<div class="room-card-top"><div class="room-num-row"><div class="room-num">' + room + '</div>' + labelHtml + '</div><div class="room-status-icon ' + st + '">' + iconFor(st) + '</div></div>';
+        // 2026-07-21修正: 「右上にはしごの表示ができて部屋番号が隠れている」というご指摘に
+        // 対応。従来の.ladder-badgeはposition:absoluteでカード左上に重ねて表示していたため、
+        // 部屋番号(.room-num)とほぼ同じ位置に重なり、部屋番号の文字が隠れてしまっていた。
+        // カードの外側に絶対配置するのをやめ、.room-num-rowの中に部屋番号と並ぶ通常の
+        // インライン要素として差し込むことで、重ならずに常に両方読めるようにした。
+        html += '<div class="room-card-top"><div class="room-num-row"><div class="room-num">' + room + '</div>' + ladder + labelHtml + '</div><div class="room-status-icon ' + st + '">' + iconFor(st) + '</div></div>';
         html += prevDefectHtml;
         html += '<div class="room-status-text ' + st + '">' + statusLabel(st) + '</div>';
         html += '<div class="room-detail">' + detailFor(room, st) + '</div>';
@@ -2950,12 +3275,22 @@
     }
     backdrop.style.display = 'block';
   }
+  // 2026-07-22追加: 削除確認ダイアログ(#scheduleDayDeleteConfirm等)専用の、ぼかし入りの
+  // 濃い背景。#modalBackdropは#panel等の通常モーダルとも共通のため、通常のshowBackdrop()の
+  // 見た目には影響を与えず、この3つの削除確認ダイアログを開く時だけ個別に呼び出す。
+  function showBackdropStrong() {
+    showBackdrop();
+    document.getElementById('modalBackdrop').classList.add('modal-backdrop-strong');
+  }
   function hideBackdrop() {
     var backdrop = document.getElementById('modalBackdrop');
     if (backdrop.style.display === 'block') {
       unlockBodyScrollForModal();
     }
     backdrop.style.display = 'none';
+    // 削除確認ダイアログ用の強調背景(ぼかし)は、閉じる経路(キャンセル/実行/背景タップ等)を
+    // 問わず、hideBackdrop()を通る限りここで必ず後始末する。
+    backdrop.classList.remove('modal-backdrop-strong');
   }
 
   /* ---- 設備点検（消防用設備等リストの個別タップ記録） ---- */
@@ -4420,7 +4755,7 @@
   function deleteProgressLogEntry() {
     if (!editingProgressLogId) return;
     document.getElementById('progressLogDeleteConfirm').style.display = 'block';
-    showBackdrop();
+    showBackdropStrong();
   }
   document.getElementById('progressLogDeleteCancel').addEventListener('click', function() {
     document.getElementById('progressLogDeleteConfirm').style.display = 'none';
@@ -5386,7 +5721,7 @@
     pendingScheduleDayDeleteIndex = i;
     document.getElementById('scheduleDayDeleteConfirmBody').textContent = (i + 1) + '日目の日程を削除します。よろしいですか？';
     document.getElementById('scheduleDayDeleteConfirm').style.display = 'block';
-    showBackdrop();
+    showBackdropStrong();
   }
   function closeScheduleDayDeleteConfirm() {
     pendingScheduleDayDeleteIndex = null;
@@ -5840,6 +6175,67 @@
     return null;
   }
 
+  // シート名が指定した接頭辞のいずれかで始まるものを、名前ゆれ(末尾スペース・棟名の
+  // 括弧書き等)を許容してすべて集める。「一覧表」「一覧表(AB)」「一覧表 (Ｃ・駐車場)」のように、
+  // 複数棟対応で同じ役割のシートが複数存在するケース(コスモシティ神戸本山・住吉川公園の実データで
+  // 確認)に対応するため、findSheetByName(完全一致のみ)とは別に用意した。2026-07-21追加。
+  function findSheetsByPrefix(workbook, prefixes) {
+    var names = workbook.SheetNames;
+    var found = [];
+    for (var i = 0; i < names.length; i++) {
+      var trimmed = names[i].trim();
+      for (var j = 0; j < prefixes.length; j++) {
+        if (trimmed.indexOf(prefixes[j]) === 0) {
+          found.push({ name: names[i], sheet: workbook.Sheets[names[i]] });
+          break;
+        }
+      }
+    }
+    return found;
+  }
+
+  // 全角数字(０-９)を半角(0-9)に変換する。部屋番号・階数の抽出前に必ず通す。2026-07-21追加。
+  function zenkakuDigitsToHankaku(s) {
+    if (s == null) return s;
+    return String(s).replace(/[０-９]/g, function(ch) { return String.fromCharCode(ch.charCodeAt(0) - 0xfee0); });
+  }
+
+  // 「一覧表」系シートの1行(0-indexed配列, A列=index0)から部屋番号を抽出する。
+  // row[3]=設置場所(D列, 自由記述テキスト), row[4]=E列(一部物件のみ、部屋番号が直接入る)。
+  // 優先順位: ①E列に明示的な部屋番号があればそれを採用 → ②設置場所が数字のみならそれを採用
+  // → ③「◯◯号室」パターン → ④「◯◯前」パターン(号室表記なし) → ⑤該当なし(共用部等とみなす)。
+  // いずれも文字列の先頭からの一致を必須とする(例:「EV1、2号前」のような、部屋ではない設置場所
+  // の説明文中に偶然現れる数字を誤って部屋番号と判定しないための安全策)。2026-07-21追加。
+  // 詳細な実データ検証は fireflow_ingest/test/test_lb_ichiran.js を参照。
+  function extractRoomNumberFromIchiranRow(row) {
+    var explicitCell = row[4];
+    if (explicitCell != null) {
+      var explicitStr = zenkakuDigitsToHankaku(String(explicitCell)).trim();
+      if (/^\d{2,4}$/.test(explicitStr)) return explicitStr;
+    }
+    var locationRaw = row[3];
+    if (locationRaw == null) return null;
+    var location = zenkakuDigitsToHankaku(String(locationRaw)).trim();
+    if (!location) return null;
+    if (/^\d{2,4}$/.test(location)) return location;
+    var mGoshitsu = location.match(/^(\d{2,4})号室/);
+    if (mGoshitsu) return mGoshitsu[1];
+    var mMae = location.match(/^(\d{2,4})前/);
+    if (mMae) return mMae[1];
+    return null;
+  }
+
+  // 階数表記を表示用に統一する。「8階」→「8F」、全角「１Ｆ」→「1F」、裸の数字「15」→「15F」。
+  // 「RF」「B1F」のような非数値の階コードはそのまま保持する。2026-07-21追加。
+  function normalizeFloorLabel(raw) {
+    if (raw == null) return '';
+    var s = zenkakuDigitsToHankaku(String(raw)).trim();
+    if (!s) return '';
+    s = s.replace(/Ｆ/g, 'F').replace('階', 'F');
+    if (/^\d+$/.test(s)) return s + 'F';
+    return s;
+  }
+
   // 結果報告書（様式1）の「消防用設備等（特殊消防用設備等）の種類等」欄から、
   // 記載がある設備名だけを抽出する（＝その物件の点検対象設備）。
   // 欄は Q19:Q28 / AI19:AI28 / BA19:BA28 / BS19:BS28 の4列×10行グリッド。
@@ -5864,7 +6260,10 @@
 
   function parseExcelAndRebuild(workbook) {
     var sashikomiSheet = findSheetByName(workbook, ['差込データ']);
-    var ichiranSheet = findSheetByName(workbook, ['一覧表 ', '一覧表']);
+    // 2026-07-21変更: 従来はfindSheetByName(完全一致)で単一シートのみを対象にしていたが、
+    // 「一覧表(AB)」「一覧表 (Ｃ・駐車場)」のように複数棟対応で複数シートに分かれている
+    // 物件(コスモシティ神戸本山・住吉川公園)に対応するため、接頭辞一致で全シートを集める。
+    var ichiranSheets = findSheetsByPrefix(workbook, ['一覧表']);
     var sokatsuSheet = findSheetByName(workbook, ['総括表']);
     var reportSheet = findSheetByContains(workbook, ['結果報告書']);
     var sensorSheet = findSheetByContains(workbook, ['自火報（一覧）', '自火報(一覧)']);
@@ -5892,7 +6291,7 @@
       }
     }
 
-    if (!ichiranSheet) {
+    if (!ichiranSheets.length) {
       showToast('「一覧表」シートが見つかりませんでした。フォーマットをご確認ください。');
       return;
     }
@@ -5955,27 +6354,43 @@
       showToast('「結果報告書」シートから消防用設備等を読み取れませんでした（設備点検欄は前回のままです）。');
     }
 
-    var iGrid = sheetToGrid(ichiranSheet);
+    // 2026-07-21変更: 複数の「一覧表」系シート(棟ごとに分かれている場合を含む)を横断して読む。
+    // 番号(No.列)はシートをまたぐと重複しうる(各シートが1から振り直されているため)ため、
+    // 複数シートを統合する場合のみ、通し番号に振り直す(1シートのみの物件は既存の番号のまま
+    // ＝挙動を変えない)。各行で抽出した部屋番号は item._room に保持し、直後の階グルーピングで
+    // そのまま使う(設置場所テキストの再パースを二重に行わない)。
     var newExtinguishers = [];
-    var currentFloor = '';
-    for (var r = 4; r < iGrid.length; r++) {
-      var row = iGrid[r];
-      if (!row) continue;
-      var no = row[0];
-      if (typeof no !== 'number') continue;
-      var floorVal = row[1];
-      if (floorVal && String(floorVal).trim() !== '〃') currentFloor = String(floorVal).trim();
-      var location = row[3] != null ? String(row[3]).trim() : '';
-      var maker = row[8] != null ? String(row[8]).trim() : '';
-      var model = row[6] != null ? String(row[6]).trim() : '';
-      var serial = row[9] != null ? String(row[9]).trim() : '';
-      var year = row[11] != null ? String(row[11]).trim() : '';
-      var remarks = row[14] != null ? String(row[14]).trim() : null;
-      newExtinguishers.push({
-        no: no, floor: currentFloor, location: location,
-        maker: maker, model: model, serial: serial, year: year, remarks: remarks,
-      });
-    }
+    var seqNo = 1;
+    var multiSheet = ichiranSheets.length > 1;
+    ichiranSheets.forEach(function(entry) {
+      var iGrid = sheetToGrid(entry.sheet);
+      var currentFloor = '';
+      var sheetHadRow = false;
+      for (var r = 4; r < iGrid.length; r++) {
+        var row = iGrid[r];
+        if (!row) continue;
+        var no = row[0];
+        if (typeof no !== 'number') continue;
+        sheetHadRow = true;
+        var floorVal = row[1];
+        if (floorVal != null && String(floorVal).trim() !== '〃') currentFloor = normalizeFloorLabel(floorVal);
+        var location = row[3] != null ? String(row[3]).trim() : '';
+        var maker = row[8] != null ? String(row[8]).trim() : '';
+        var model = row[6] != null ? String(row[6]).trim() : '';
+        var serial = row[9] != null ? String(row[9]).trim() : '';
+        var year = row[11] != null ? String(row[11]).trim() : '';
+        var remarks = row[14] != null ? String(row[14]).trim() : null;
+        newExtinguishers.push({
+          no: multiSheet ? seqNo : no, floor: currentFloor, location: location,
+          maker: maker, model: model, serial: serial, year: year, remarks: remarks,
+          _room: extractRoomNumberFromIchiranRow(row),
+        });
+        seqNo++;
+      }
+      if (!sheetHadRow) {
+        // データ行が1件も無いシート(例: プライマリー新大阪の空の重複「一覧表」)は無視する。
+      }
+    });
 
     if (!newExtinguishers.length) {
       showToast('「一覧表」シートから部屋・消火器データを読み取れませんでした。');
@@ -5984,7 +6399,9 @@
 
     // 部屋番号を抽出し、階ごとにグルーピングする
     // 「自火報（一覧）」シートが最も網羅的（全戸に感知器が設置されているため）なのでこちらを優先し、
-    // 取得できない場合のみ、消火器の設置場所（「◯◯号室前」）から推定する（一部の部屋しか拾えない可能性あり）
+    // 取得できない場合のみ、消火器の設置場所（「◯◯号室前」等、複数パターンに対応）から推定する
+    // （一部の部屋しか拾えない可能性あり。物件によっては設置場所が「通路」等の共用部表記のみで
+    // 部屋番号が一切含まれず、0件になる場合がある＝要人手確認。詳細は取込基盤の検証ドキュメント参照）
     function floorLabelOfRoom(room) {
       var digits = String(room).replace(/\D/g, '');
       if (digits.length >= 3) return digits.slice(0, digits.length - 2) + 'F';
@@ -6000,12 +6417,10 @@
       });
     } else {
       newExtinguishers.forEach(function(item) {
-        var match = item.location.match(/^(\d{2,4})号室/);
-        if (!match) return;
-        var room = match[1];
-        var floorLabel = (item.floor || '').replace('階', 'F');
+        if (!item._room) return;
+        var floorLabel = item.floor || '(階不明)';
         if (!floorMap[floorLabel]) floorMap[floorLabel] = [];
-        if (floorMap[floorLabel].indexOf(room) === -1) floorMap[floorLabel].push(room);
+        if (floorMap[floorLabel].indexOf(item._room) === -1) floorMap[floorLabel].push(item._room);
       });
     }
 
@@ -6017,8 +6432,12 @@
       return { label: fk, rooms: rooms };
     });
 
+    // 内部フィールド(_room)は表示に使わないため、EXTINGUISHER_DATAとして確定させる前に取り除く。
+    newExtinguishers.forEach(function(item) { delete item._room; });
+
     if (!newFloors.length) {
-      showToast('部屋番号を読み取れませんでした（「◯◯号室前」の形式のみ対応しています）。');
+      showToast('部屋番号を読み取れませんでした。「一覧表」シートの設置場所欄に部屋番号の手がかりが' +
+        '無い物件の可能性があります（管理会社ごとの帳票差異の可能性があるため、要確認）。');
       return;
     }
 
@@ -6033,7 +6452,15 @@
     // LADDER_ROOMSに採用する(「集会室」のように部屋番号ではない記載や、号室の桁数の表記ゆれは
     // 実在する部屋番号と一致しないため自然に除外される「安全側」の実装)。
     var newLadderRooms = [];
+    // 2026-07-21変更: 「避難器具AB」「避難器具C」のように棟別に分かれている物件(住吉川公園)では
+    // 完全一致(findSheetByName)で見つからないため、接頭辞一致にフォールバックする。
+    // ※現状は最初に見つかった1シート分のみを対象とする(他棟の設置場所テキストは未対応。
+    // 完全な複数棟対応は今後の課題として別途記録する)。
     var hinankiguSheet = findSheetByName(workbook, ['避難器具']);
+    if (!hinankiguSheet) {
+      var hinankiguCandidates = findSheetsByPrefix(workbook, ['避難器具']);
+      if (hinankiguCandidates.length) hinankiguSheet = hinankiguCandidates[0].sheet;
+    }
     if (hinankiguSheet) {
       var hGrid = sheetToGrid(hinankiguSheet);
       var ladderLocationText = null;
@@ -6056,7 +6483,12 @@
           var fnum = parseInt(f.label, 10);
           if (!isNaN(fnum)) floorRoomLookup[fnum] = f.rooms;
         });
-        var ladderSegRe = /(\d+)\s*階\s*(?:[~～\-]\s*(\d+)\s*階)?\s*[…:：]?\s*([\d、,，\s]+)号室/g;
+        // 2026-07-21変更: 「2階～5階　各1、5号室」のように階範囲と号室番号の間に「各」が
+        // 挟まる表記(実データ アービング千里桃山台で確認)では、従来の正規表現では「各」の
+        // 直後の号室番号一覧にマッチできず、その階範囲全体が抽出漏れになっていた
+        // (「各」は数字・区切り文字のみを許可する号室番号キャプチャに含まれていなかったため)。
+        // 「各」を任意でスキップできるようにして対応した。
+        var ladderSegRe = /(\d+)\s*階\s*(?:[~～\-]\s*(\d+)\s*階)?\s*[…:：]?\s*(?:各)?\s*([\d、,，\s]+)号室/g;
         var ladderSegMatch;
         while ((ladderSegMatch = ladderSegRe.exec(ladderLocationText)) !== null) {
           var floorStart = parseInt(ladderSegMatch[1], 10);
@@ -6102,6 +6534,15 @@
     PREVIOUS_DEFECTS = newDefects;
     FLOORS = newFloors;
     LADDER_ROOMS = newLadderRooms;
+    // 2026-07-21修正: EVACUATION_EQUIPMENT_ROOMS(「は」バッジ〈避難器具(降下障害)の記録〉の
+    // 対象部屋)は、これまでコスモ六甲ガーデンフォート(組み込みデモ)固有の部屋番号一覧を
+    // 直書きした定数のままで、新しい物件データを読み込んでもLADDER_ROOMSのように再計算されず
+    // 一切更新されていなかった。そのため、別の物件を読み込んだ後も前の物件(コスモ六甲)の
+    // 「は」バッジが部屋番号の偶然の一致で表示され続けてしまう不具合があった。「降下障害」は
+    // 避難器具(はしご)が設置されている部屋にのみ起こりうるリスクのため、LADDER_ROOMSと
+    // 同じ抽出結果(newLadderRooms、その物件自身の「避難器具」シートから算出)で置き換える
+    // ことで、読み込んだ物件ごとに正しく更新されるようにした。
+    EVACUATION_EQUIPMENT_ROOMS = newLadderRooms;
     TOTAL_ROOMS = 0;
     FLOORS.forEach(function(f) { TOTAL_ROOMS += f.rooms.length; });
     EXTINGUISHER_DATA = newExtinguishers;
@@ -6419,14 +6860,25 @@
     if (!fieldTestMode || !fieldTestCurrent || fieldTestCurrent.room !== room) return;
     fieldTestCurrent.photoAddedAt.push(Date.now());
   }
+  // [2026-07-22変更] 「iOS風Switchへ変更」のご依頼により、ON/OFF選択ポップアップ経由ではなく
+  // 行のスイッチをその場で直接切り替える方式にした。状態の反映先も、ポップアップ内の選択肢
+  // (.field-test-mode-option、廃止済み)ではなく、#settingsMenuFieldTestModeBtn(行全体)・
+  // #fieldTestModeSwitch(スイッチの見た目)のaria-checked/クラスに変更している。
+  function syncFieldTestModeUi() {
+    var row = document.getElementById('settingsMenuFieldTestModeBtn');
+    var sw = document.getElementById('fieldTestModeSwitch');
+    var label = document.getElementById('fieldTestModeBtnLabel');
+    if (row) row.setAttribute('aria-checked', fieldTestMode ? 'true' : 'false');
+    if (sw) sw.setAttribute('aria-checked', fieldTestMode ? 'true' : 'false');
+    if (label) label.textContent = fieldTestMode ? 'ON（操作時間を記録中）' : '操作時間を記録します';
+  }
   function setFieldTestMode(on) {
     fieldTestMode = !!on;
     try { window.localStorage.setItem(FIELD_TEST_MODE_KEY, fieldTestMode ? '1' : '0'); } catch (e) {}
     if (!fieldTestMode) fieldTestCurrent = null; // OFFにした場合、計測中のセッションは破棄する(中途半端な記録を残さない)
-    syncOptionButtonsActiveState('.field-test-mode-option', 'data-fieldtestmode', fieldTestMode ? 'on' : 'off');
-    document.getElementById('fieldTestModeBtnLabel').textContent = '現場テストモード：' + (fieldTestMode ? 'ON' : 'OFF');
+    syncFieldTestModeUi();
   }
-  document.getElementById('fieldTestModeBtnLabel').textContent = '現場テストモード：' + (fieldTestMode ? 'ON' : 'OFF');
+  syncFieldTestModeUi();
 
   function formatFieldTestDuration(ms) {
     if (ms == null || ms < 0) return null;
@@ -6530,19 +6982,10 @@
     });
     return header.join(',') + '\n' + rows.join('\n');
   }
+  // [2026-07-22変更] 行(#settingsMenuFieldTestModeBtn)をタップすると、ポップアップを開かず
+  // その場で直接ON/OFFを切り替える(iOS風トグルスイッチ)。
   document.getElementById('settingsMenuFieldTestModeBtn').addEventListener('click', function() {
-    document.getElementById('settingsMenuPopup').style.display = 'none';
-    syncOptionButtonsActiveState('.field-test-mode-option', 'data-fieldtestmode', fieldTestMode ? 'on' : 'off');
-    document.getElementById('fieldTestModePopup').style.display = 'block';
-  });
-  document.getElementById('fieldTestModeCancelBtn').addEventListener('click', function() {
-    document.getElementById('fieldTestModePopup').style.display = 'none';
-  });
-  Array.prototype.forEach.call(document.querySelectorAll('.field-test-mode-option'), function(btn) {
-    btn.addEventListener('click', function() {
-      setFieldTestMode(btn.getAttribute('data-fieldtestmode') === 'on');
-      document.getElementById('fieldTestModePopup').style.display = 'none';
-    });
+    setFieldTestMode(!fieldTestMode);
   });
   document.getElementById('settingsMenuFieldTestResultsBtn').addEventListener('click', function() {
     document.getElementById('settingsMenuPopup').style.display = 'none';
@@ -6576,34 +7019,27 @@
     resetInactivityTimer();
   }
 
-  // 2026-07-19変更: window.confirm()による確認から、アプリ内蔵ダイアログ+「リセット」
-  // 文字入力による確認に変更(#resetDataConfirmDialog)。実際のリセット処理自体は
-  // #resetDataConfirmOkのクリックハンドラ側に移した。
+  // 2026-07-19変更: window.confirm()による確認から、アプリ内蔵ダイアログによる確認に変更
+  // (#resetDataConfirmDialog)。実際のリセット処理自体は#resetDataConfirmOkのクリック
+  // ハンドラ側に移した。
   // [2026-07-19再修正] #resetDataBtn自体を物件情報タブの「設定情報」欄から歯車メニュー
   // (#settingsMenuPopup)内へ移動したため、確認ダイアログを開く際に歯車メニュー自体は
   // 閉じるようにしている。
+  // [2026-07-21変更] 「リセット」という文字入力による確認は手間が大きいとのご指摘を受け、
+  // OK/キャンセルの2択タップのみの確認に変更した(ダイアログ自体は残るため誤タップ1回では
+  // 実行されない)。あわせて、リセット処理が state[room](サイン・写真・点検状況)しか
+  // 消しておらず、点検希望時刻(STAMP_DATA、および当日変更のscheduleOverrides)が「全データを
+  // リセット」した後も画面に残ってしまっていた不具合を修正し、両方も一緒に削除するようにした。
   document.getElementById('resetDataBtn').addEventListener('click', function() {
     document.getElementById('settingsMenuPopup').style.display = 'none';
-    var input = document.getElementById('resetDataConfirmInput');
-    input.value = '';
-    var okBtn = document.getElementById('resetDataConfirmOk');
-    okBtn.disabled = true;
-    okBtn.style.opacity = '0.4';
     document.getElementById('resetDataConfirmDialog').style.display = 'block';
-    showBackdrop();
-  });
-  document.getElementById('resetDataConfirmInput').addEventListener('input', function() {
-    var okBtn = document.getElementById('resetDataConfirmOk');
-    var matches = this.value.trim() === 'リセット';
-    okBtn.disabled = !matches;
-    okBtn.style.opacity = matches ? '1' : '0.4';
+    showBackdropStrong();
   });
   document.getElementById('resetDataConfirmCancel').addEventListener('click', function() {
     document.getElementById('resetDataConfirmDialog').style.display = 'none';
     hideBackdrop();
   });
   document.getElementById('resetDataConfirmOk').addEventListener('click', function() {
-    if (document.getElementById('resetDataConfirmInput').value.trim() !== 'リセット') return;
     document.getElementById('resetDataConfirmDialog').style.display = 'none';
     hideBackdrop();
     var allRooms = [];
@@ -6615,6 +7051,20 @@
         storageDelete(keyFor(room), true).catch(function() {});
       } catch (err) {}
     });
+    // 点検希望時刻(取込データ・当日変更の両方)も削除する。2026-07-21追加。
+    Object.keys(STAMP_DATA).forEach(function(room) {
+      try {
+        storageDelete(STAMP_SCAN_KEY_PREFIX + room, true).catch(function() {});
+      } catch (err) {}
+    });
+    STAMP_DATA = {};
+    Object.keys(scheduleOverrides).forEach(function(room) {
+      try {
+        storageDelete(scheduleOverrideKeyFor(room), true).catch(function() {});
+      } catch (err) {}
+    });
+    scheduleOverrides = {};
+    initScheduleLabels();
     renderFloors();
     showToast('全てのデータをリセットしました');
   });
@@ -6719,6 +7169,11 @@
     showBackdrop();
   });
   document.getElementById('uploadChoiceCancel').addEventListener('click', function() {
+    document.getElementById('uploadChoiceDialog').style.display = 'none';
+    hideBackdrop();
+  });
+  // 2026-07-22追加: 右上×ボタン(下部の「キャンセル」と同じ動作)。
+  document.getElementById('uploadChoiceCloseX').addEventListener('click', function() {
     document.getElementById('uploadChoiceDialog').style.display = 'none';
     hideBackdrop();
   });
@@ -7089,6 +7544,7 @@
   // ため、body.overviewをトグルする行を削除。CSS側のbody.overview関連ルールも合わせて
   // 削除済み(このコメントの後段、ルーム表示CSS付近を参照)。
   var gridMode = 'normal'; // normal / enlarged
+  var GRID_MODE_LABELS = { normal: '標準', enlarged: '全体' };
   function applyGridMode(mode) {
     gridMode = mode;
     document.body.classList.toggle('enlarged', gridMode === 'enlarged');
@@ -7096,8 +7552,21 @@
     Array.prototype.forEach.call(document.querySelectorAll('.grid-mode-option'), function(btn) {
       btn.setAttribute('data-active', btn.getAttribute('data-mode') === gridMode ? 'true' : 'false');
     });
+    // 2026-07-22追加: 設定画面「表示モード」行のサブテキストに、現在の選択(標準/全体)を表示する。
+    var label = document.getElementById('gridModeCurrentLabel');
+    if (label) label.textContent = GRID_MODE_LABELS[gridMode] || gridMode;
   }
   document.getElementById('gridExpandToggle').addEventListener('click', function() {
+    Array.prototype.forEach.call(document.querySelectorAll('.grid-mode-option'), function(btn) {
+      btn.setAttribute('data-active', btn.getAttribute('data-mode') === gridMode ? 'true' : 'false');
+    });
+    document.getElementById('gridModePopup').style.display = 'block';
+  });
+  // 2026-07-22追加: 設定画面「表示設定」内の「表示モード」行から同じ#gridModePopupを開く
+  // 入口(#gridExpandToggleと同じ選択肢・同じ挙動)。設定画面(#settingsMenuPopup)は
+  // 他の項目(画面ロック解除方法等)と同様、いったん閉じてから開く。
+  document.getElementById('settingsMenuGridModeBtn').addEventListener('click', function() {
+    document.getElementById('settingsMenuPopup').style.display = 'none';
     Array.prototype.forEach.call(document.querySelectorAll('.grid-mode-option'), function(btn) {
       btn.setAttribute('data-active', btn.getAttribute('data-mode') === gridMode ? 'true' : 'false');
     });
@@ -7118,12 +7587,18 @@
   // OSのアクセシビリティ設定に応じて自動拡大しないため)。その代わりアプリ内蔵の
   // 切替機能として実装し、選択は端末のlocalStorageに保存して次回起動時も復元する。
   var FONT_SCALE_KEY = 'lb_font_scale';
+  var FONT_SCALE_LABELS = { '1': '標準', '1.15': '大', '1.3': '特大' };
+  var currentFontScale = '1';
   function applyFontScale(scale) {
+    currentFontScale = String(scale);
     document.documentElement.style.setProperty('--font-scale', String(scale));
     Array.prototype.forEach.call(document.querySelectorAll('.font-size-option'), function(btn) {
       btn.setAttribute('data-active', btn.getAttribute('data-scale') === String(scale) ? 'true' : 'false');
     });
     try { window.localStorage.setItem(FONT_SCALE_KEY, String(scale)); } catch (e) {}
+    // 2026-07-22追加: 設定画面「文字サイズ」行のサブテキストに、現在の選択(標準/大/特大)を表示する。
+    var label = document.getElementById('fontSizeCurrentLabel');
+    if (label) label.textContent = FONT_SCALE_LABELS[String(scale)] || String(scale);
   }
   (function initFontScale() {
     var saved = '1';
@@ -7138,10 +7613,28 @@
   document.getElementById('settingsMenuCancelBtn').addEventListener('click', function() {
     document.getElementById('settingsMenuPopup').style.display = 'none';
   });
+  // 2026-07-22追加: ヘッダー右上の×ボタンも「閉じる」ボタンと同じ動作(#settingsMenuCancelBtnの
+  // クリックを模擬)にする。
+  document.getElementById('settingsMenuCloseX').addEventListener('click', function() {
+    document.getElementById('settingsMenuPopup').style.display = 'none';
+  });
+  // 2026-07-22追加: 「文字サイズ」行から#fontSizePopup(独立した選択画面)を開く入口。
+  // 画面ロック解除方法(#settingsMenuLockModeBtn)と同じ「設定画面をいったん閉じてから
+  // 専用の選択画面を開く」構造にしている。
+  document.getElementById('settingsMenuFontSizeBtn').addEventListener('click', function() {
+    document.getElementById('settingsMenuPopup').style.display = 'none';
+    Array.prototype.forEach.call(document.querySelectorAll('.font-size-option'), function(btn) {
+      btn.setAttribute('data-active', btn.getAttribute('data-scale') === currentFontScale ? 'true' : 'false');
+    });
+    document.getElementById('fontSizePopup').style.display = 'block';
+  });
+  document.getElementById('fontSizeCancelBtn').addEventListener('click', function() {
+    document.getElementById('fontSizePopup').style.display = 'none';
+  });
   Array.prototype.forEach.call(document.querySelectorAll('.font-size-option'), function(btn) {
     btn.addEventListener('click', function() {
       applyFontScale(btn.getAttribute('data-scale'));
-      document.getElementById('settingsMenuPopup').style.display = 'none';
+      document.getElementById('fontSizePopup').style.display = 'none';
     });
   });
   function setFilter(val) {
@@ -7242,33 +7735,13 @@
     currentRoom = null;
     hideBackdrop();
   }
-  // 2026-07-17追加(⑤1室操作時間短縮): 同じ階の中で、今の部屋より後にある「まだ未点検(pending)」の
-  // 部屋を1件返す。見つからない場合(同じ階が全て対応済み、または部屋がどの階にも属さない場合)はnull。
-  // 階をまたいだ移動は行わない(実際の巡回順は階単位が基本のため、意図しない飛び先を避ける)。
-  function findNextPendingRoomInSameFloor(room) {
-    for (var i = 0; i < FLOORS.length; i++) {
-      var rooms = FLOORS[i].rooms;
-      var idx = rooms.indexOf(room);
-      if (idx === -1) continue;
-      for (var j = idx + 1; j < rooms.length; j++) {
-        if (statusOf(rooms[j]) === 'pending') return rooms[j];
-      }
-      return null;
-    }
-    return null;
-  }
-  // サイン保存・キャンセル扱い(=その部屋への対応が完了した瞬間)に呼ぶ。同じ階に次の未点検の
-  // 部屋が残っていればそのままパネルを開き直し、一覧へ戻る往復と部屋探しのタップを省略する。
-  // 残っていなければ、これまで通り一覧に戻る。
+  // 2026-07-17追加(⑤1室操作時間短縮): 同じ階の次の未点検部屋へ自動でパネルを開き直す機能を
+  // 実装していたが、[2026-07-21変更] 実際の現場では次の部屋の案内が不要(むしろ時間のロスになる)
+  // とのご指摘を受け、常に一覧画面へ戻るだけのシンプルな動作に戻した(findNextPendingRoomInSameFloor
+  // による自動遷移は廃止)。#markUndoの「未点検に戻す」も元々同じ「常に一覧へ戻る」動作。
   function advanceAfterRoomFinished(room, message) {
-    var nextRoom = findNextPendingRoomInSameFloor(room);
-    if (nextRoom) {
-      showToast(message + ' → 続けて' + roomDisplayLabel(nextRoom) + 'へ');
-      openPanel(nextRoom);
-    } else {
-      showToast(message);
-      closeRoomPanelToGrid();
-    }
+    showToast(message);
+    closeRoomPanelToGrid();
   }
   document.getElementById('closePanel').addEventListener('click', closeRoomPanelToGrid);
   document.getElementById('clearSign').addEventListener('click', function() {
